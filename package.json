@@ -1,0 +1,11 @@
+{
+  "name": "nossa-historia",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Site de aniversário de 2 anos com álbum de memórias e área de admin para adicionar fotos.",
+  "dependencies": {
+    "@vercel/blob": "^2.8.0",
+    "formidable": "^3.5.4"
+  }
+}

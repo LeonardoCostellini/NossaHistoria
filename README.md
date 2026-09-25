@@ -55,7 +55,28 @@ o site mostra alguns exemplos fixos no lugar, só para não ficar vazio.
 5. Acesse `seuprojeto.vercel.app/admin.html` para começar a adicionar fotos,
    momentos e eventos.
 
-## O que ainda é editado direto no código
+## Se a foto não salvar (erro 500)
+
+Deixei a API mais robusta: agora, se algo der errado ao salvar, o erro
+detalhado aparece na aba **Network** do navegador (clique na requisição
+`dados` → aba **Response**) em vez de um "500" mudo. As causas mais comuns:
+
+- **Storage → Blob não foi ativado** no projeto da Vercel (passo 2 abaixo).
+- **`ADMIN_PASSWORD` não configurada**, ou configurada depois do último deploy
+  (variáveis de ambiente só valem a partir do próximo deploy — refaça o
+  deploy depois de criar/editar a variável).
+
+Se o erro continuar sem explicação clara, veja o log de verdade em
+**Vercel → seu projeto → aba Deployments → clique no deploy mais recente →
+aba Logs (ou "Runtime Logs")** — ele mostra a mensagem de erro exata do
+servidor.
+
+## URLs sem ".html"
+
+Adicionei um `vercel.json` com `cleanUrls: true`. Depois do próximo deploy,
+o site abre em `seuprojeto.vercel.app` e a área administrativa em
+`seuprojeto.vercel.app/admin` — sem o `.html` no final.
+
 
 Só nomes, datas gerais e os textos mais "fixos" continuam no topo do
 `<script>` dentro de `public/index.html`:

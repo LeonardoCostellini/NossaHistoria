@@ -148,7 +148,7 @@ a{color:inherit;}
    Personagens originais — casal ursinho & panda (ilustração própria, SVG)
    Inspirados na estética fofa de casais-mascote, sem reproduzir arte licenciada.
 ------------------------------------------------------------------------- */
-.duo-personagens{display:flex; align-items:flex-end; gap:-6px;}
+.duo-personagens{display:flex; align-items:flex-end; gap:-6px; cursor:pointer;}
 .duo-personagens svg{filter:drop-shadow(0 8px 14px rgba(0,0,0,0.18));}
 .urso-svg{margin-right:-14px;}
 .duo-personagens img{
@@ -269,7 +269,8 @@ section{padding:80px 0; position:relative;}
 .timeline-data{font-size:0.78rem; color:var(--rose); font-weight:700; letter-spacing:0.03em; margin-bottom:4px;}
 .timeline-titulo{font-family:var(--font-display); font-weight:600; font-size:1.2rem; margin:0 0 8px; color:var(--cocoa-deep);}
 .timeline-texto{color:var(--ink-soft); font-size:0.94rem; line-height:1.55; margin:0;}
-.timeline-personagem{position:absolute; right:-6px; bottom:-18px; width:46px; opacity:0.95; pointer-events:none;}
+.timeline-personagem{position:absolute; right:-6px; bottom:-18px; width:46px; opacity:0.95; cursor:pointer; transition:transform .2s ease;}
+.timeline-personagem:hover{transform:scale(1.15);}
 .timeline-foto{margin-top:12px; border-radius:8px; overflow:hidden; max-width:220px;}
 .timeline-foto img{width:100%; display:block;}
 
@@ -495,6 +496,12 @@ footer{
   text-align:center; padding:50px 20px 70px; color:var(--ink-soft); font-size:0.85rem;
 }
 footer .footer-coracao{color:var(--rose-deep);}
+.link-admin{
+  display:inline-block; color:var(--ink-soft); font-size:0.78rem; text-decoration:none;
+  border:1px solid rgba(107,74,58,0.2); padding:7px 16px; border-radius:999px;
+  transition:background .2s, color .2s;
+}
+.link-admin:hover{background:var(--blush); color:var(--rose-deep);}
 
 /* Corações flutuando pelo fundo do site (discreto) */
 .coracao-fundo{
@@ -636,7 +643,7 @@ footer .footer-coracao{color:var(--rose-deep);}
   <footer>
     <p>feito à mão, com <span class="footer-coracao">❤</span>, para <span id="nome-dela-rodape">[NOME DELA]</span> — por <span id="meu-nome-rodape">[MEU NOME]</span></p>
     <p style="opacity:.7; margin-top:4px;">esta página vai continuar crescendo com a gente.</p>
-    <p style="margin-top:14px;"><a href="admin.html" style="color:var(--ink-soft); font-size:0.78rem; text-decoration:underline;">área administrativa</a></p>
+    <p style="margin-top:16px;"><a href="/admin" target="_blank" rel="noopener" class="link-admin">⚙️ área administrativa</a></p>
   </footer>
 </div>
 
@@ -891,20 +898,51 @@ function ruidoPapel(duracao=0.25, volumeBase=0.09){
   fonte.connect(filtro).connect(gain).connect(ctx.destination);
   fonte.start();
 }
+// "Boop" fofo, tipo som de pelúcia/brinquedo — é o som "da personagem" em si,
+// usado sempre que você toca no ursinho, no panda, ou em algo que eles "reagem".
+function tocarBoop(freqInicial=460, freqFinal=760, duracao=0.16, volumeBase=0.12){
+  const ctx = obterContexto();
+  const volume = volumeBase * volumeAtual();
+  const inicio = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freqInicial, inicio);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(freqFinal,1), inicio + duracao);
+  gain.gain.setValueAtTime(0, inicio);
+  gain.gain.linearRampToValueAtTime(volume, inicio + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, inicio + duracao + 0.06);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(inicio);
+  osc.stop(inicio + duracao + 0.1);
+}
+// Risadinha fofa — usada nas surpresas (easter eggs) e na comemoração
+function tocarGiggle(notas=[660,784,660,880], intervalo=95){
+  notas.forEach((f,i) => setTimeout(() => tocarBoop(f, f*1.15, 0.11, 0.07), i*intervalo));
+}
 const Sons = {
-  clique:        () => tocarTom([880], 0.12, 'sine', 0.07),
+  clique:        () => tocarBoop(520, 780, 0.12, 0.08),
   passarPagina:  () => ruidoPapel(0.22, 0.08),
-  revelar:       () => tocarTom([523.25, 659.25], 0.4, 'sine', 0.06),
-  virarCartao:   () => tocarTom([660, 990], 0.22, 'triangle', 0.07),
+  revelar:       () => { tocarBoop(430, 600, 0.15, 0.05); setTimeout(() => tocarBoop(560, 740, 0.15, 0.05), 130); }, // "conversinha" do ursinho e do panda
+  virarCartao:   () => tocarBoop(650, 400, 0.14, 0.07),
   abrirEnvelope: () => { ruidoPapel(0.3, 0.09); setTimeout(() => tocarTom([523.25,659.25,783.99], 0.7, 'sine', 0.06), 160); },
-  evento:        () => tocarTom([740, 988], 0.18, 'sine', 0.06),
-  surpresa:      () => tocarTom([784, 988, 1175, 1568], 0.7, 'sine', 0.08),
-  comemoracao:   () => tocarTom([523.25, 659.25, 783.99, 1046.5], 1.0, 'sine', 0.08),
+  evento:        () => tocarBoop(480, 700, 0.13, 0.06),
+  surpresa:      () => tocarGiggle(),
+  comemoracao:   () => { tocarGiggle([523.25,659.25,783.99,1046.5], 110); },
 };
 function tocarSom(fn){
   if(!audioLigado) return;
   try { fn(); } catch(erro){ /* navegador sem suporte a Web Audio — segue em silêncio */ }
 }
+
+// Tocar no casal da tela inicial faz eles "responderem" com um boopzinho
+document.getElementById('duo-capa').addEventListener('click', (e) => {
+  e.stopPropagation();
+  tocarSom(Sons.clique);
+  const alvo = e.currentTarget;
+  alvo.style.transform = 'scale(1.08)';
+  setTimeout(() => { alvo.style.transform = ''; }, 180);
+});
 
 /* =========================================================================
    4. TRANSIÇÃO CAPA → APP
@@ -1016,6 +1054,9 @@ function renderTimeline(){
       </div>
     </div>
   `).join('');
+  document.querySelectorAll('.timeline-personagem').forEach(el => {
+    el.addEventListener('click', (e) => { e.stopPropagation(); tocarSom(Sons.clique); });
+  });
   observarRevelacoes();
 }
 renderTimeline();

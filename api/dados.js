@@ -97,92 +97,107 @@ function senhaValida(valor) {
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    const colecao = (req.query.colecao || '').toString();
-    const config = COLECOES[colecao];
-    if (!config) return res.status(400).json({ erro: 'Coleção inválida.' });
+  try {
+    // Não dependemos de req.query (pode não estar disponível dependendo do
+    // runtime); lemos a query string diretamente da URL, o que funciona sempre.
+    const url = new URL(req.url, 'http://localhost');
+    const parametros = url.searchParams;
 
-    const dados = await lerManifesto(config.manifesto);
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json(dados);
-  }
+    if (req.method === 'GET') {
+      const colecao = parametros.get('colecao') || '';
+      const config = COLECOES[colecao];
+      if (!config) return res.status(400).json({ erro: 'Coleção inválida: ' + colecao });
 
-  if (req.method === 'POST') {
-    const form = formidable({ maxFileSize: 15 * 1024 * 1024 });
-
-    let fields, files;
-    try {
-      [fields, files] = await form.parse(req);
-    } catch (erro) {
-      return res.status(400).json({ erro: 'Não consegui ler o formulário enviado.' });
+      const dados = await lerManifesto(config.manifesto);
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).json(dados);
     }
 
-    const colecao = campoTexto(fields, 'colecao');
-    const config = COLECOES[colecao];
-    if (!config) return res.status(400).json({ erro: 'Coleção inválida.' });
+    if (req.method === 'POST') {
+      const form = formidable({ maxFileSize: 15 * 1024 * 1024 });
 
-    const senha = campoTexto(fields, 'senha');
-    if (!senhaValida(senha)) {
-      return res.status(401).json({ erro: 'Senha incorreta.' });
-    }
-
-    let urlFoto = null;
-    const arquivo = Array.isArray(files.foto) ? files.foto[0] : files.foto;
-
-    if (config.obrigatorioFoto && !arquivo) {
-      return res.status(400).json({ erro: 'Esta seção exige uma foto.' });
-    }
-
-    if (config.permiteFoto && arquivo) {
+      let fields, files;
       try {
-        const buffer = fs.readFileSync(arquivo.filepath);
-        const nomeArquivo = `fotos/${Date.now()}-${(arquivo.originalFilename || 'foto').replace(/[^a-zA-Z0-9._-]/g, '-')}`;
-        const blob = await put(nomeArquivo, buffer, {
-          access: 'public',
-          contentType: arquivo.mimetype || 'image/jpeg',
-        });
-        urlFoto = blob.url;
+        [fields, files] = await form.parse(req);
       } catch (erro) {
-        console.error('Erro ao enviar foto para o Blob:', erro);
-        return res.status(500).json({ erro: 'Não consegui salvar a foto.' });
+        console.error('Erro ao ler formulário:', erro);
+        return res.status(400).json({ erro: 'Não consegui ler o formulário enviado: ' + erro.message });
       }
+
+      const colecao = campoTexto(fields, 'colecao');
+      const config = COLECOES[colecao];
+      if (!config) return res.status(400).json({ erro: 'Coleção inválida: ' + colecao });
+
+      const senha = campoTexto(fields, 'senha');
+      if (!senhaValida(senha)) {
+        return res.status(401).json({ erro: 'Senha incorreta.' });
+      }
+
+      let urlFoto = null;
+      const arquivo = Array.isArray(files.foto) ? files.foto[0] : files.foto;
+
+      if (config.obrigatorioFoto && !arquivo) {
+        return res.status(400).json({ erro: 'Esta seção exige uma foto.' });
+      }
+
+      if (config.permiteFoto && arquivo) {
+        try {
+          const buffer = fs.readFileSync(arquivo.filepath);
+          const nomeArquivo = `fotos/${Date.now()}-${(arquivo.originalFilename || 'foto').replace(/[^a-zA-Z0-9._-]/g, '-')}`;
+          const blob = await put(nomeArquivo, buffer, {
+            access: 'public',
+            contentType: arquivo.mimetype || 'image/jpeg',
+          });
+          urlFoto = blob.url;
+        } catch (erro) {
+          console.error('Erro ao enviar foto para o Blob:', erro);
+          return res.status(500).json({ erro: 'Não consegui salvar a foto: ' + erro.message });
+        }
+      }
+
+      const item = {
+        id: Date.now().toString(),
+        ...config.montar(fields),
+        ...(urlFoto ? { img: urlFoto } : {}),
+        criadoEm: new Date().toISOString(),
+      };
+
+      const lista = await lerManifesto(config.manifesto);
+      lista.unshift(item);
+      await salvarManifesto(config.manifesto, lista);
+
+      return res.status(200).json({ ok: true, item });
     }
 
-    const item = {
-      id: Date.now().toString(),
-      ...config.montar(fields),
-      ...(urlFoto ? { img: urlFoto } : {}),
-      criadoEm: new Date().toISOString(),
-    };
+    if (req.method === 'DELETE') {
+      const id = parametros.get('id');
+      const senha = parametros.get('senha');
+      const colecao = parametros.get('colecao');
+      const config = COLECOES[colecao];
+      if (!config) return res.status(400).json({ erro: 'Coleção inválida: ' + colecao });
+      if (!senhaValida(senha)) return res.status(401).json({ erro: 'Senha incorreta.' });
+      if (!id) return res.status(400).json({ erro: 'Informe o id do item a remover.' });
 
-    const lista = await lerManifesto(config.manifesto);
-    lista.unshift(item);
-    await salvarManifesto(config.manifesto, lista);
+      const lista = await lerManifesto(config.manifesto);
+      const item = lista.find((m) => m.id === id);
+      if (!item) return res.status(404).json({ erro: 'Item não encontrado.' });
 
-    return res.status(200).json({ ok: true, item });
-  }
+      if (item.img) {
+        try { await del(item.img); } catch (erro) { console.error('Aviso: não consegui apagar a foto:', erro); }
+      }
 
-  if (req.method === 'DELETE') {
-    const { id, senha, colecao } = req.query;
-    const config = COLECOES[colecao];
-    if (!config) return res.status(400).json({ erro: 'Coleção inválida.' });
-    if (!senhaValida(senha)) return res.status(401).json({ erro: 'Senha incorreta.' });
-    if (!id) return res.status(400).json({ erro: 'Informe o id do item a remover.' });
+      const restantes = lista.filter((m) => m.id !== id);
+      await salvarManifesto(config.manifesto, restantes);
 
-    const lista = await lerManifesto(config.manifesto);
-    const item = lista.find((m) => m.id === id);
-    if (!item) return res.status(404).json({ erro: 'Item não encontrado.' });
-
-    if (item.img) {
-      try { await del(item.img); } catch (erro) { console.error('Aviso: não consegui apagar a foto:', erro); }
+      return res.status(200).json({ ok: true });
     }
 
-    const restantes = lista.filter((m) => m.id !== id);
-    await salvarManifesto(config.manifesto, restantes);
-
-    return res.status(200).json({ ok: true });
+    res.setHeader('Allow', 'GET, POST, DELETE');
+    return res.status(405).json({ erro: 'Método não permitido.' });
+  } catch (erroInesperado) {
+    // Rede de segurança: qualquer erro que escapou dos blocos acima agora
+    // volta como um JSON legível, em vez de um 500 mudo no navegador.
+    console.error('Erro inesperado em /api/dados:', erroInesperado);
+    return res.status(500).json({ erro: 'Erro interno: ' + (erroInesperado && erroInesperado.message ? erroInesperado.message : 'desconhecido') });
   }
-
-  res.setHeader('Allow', 'GET, POST, DELETE');
-  return res.status(405).json({ erro: 'Método não permitido.' });
 }

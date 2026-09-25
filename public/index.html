@@ -154,9 +154,13 @@ a{color:inherit;}
 .duo-personagens img{
   width:150px; height:150px; object-fit:contain;
   filter:drop-shadow(0 10px 20px rgba(0,0,0,0.28));
+<<<<<<< HEAD
   animation:respirar 3.6s ease-in-out infinite;
 }
 @keyframes respirar{0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-6px) rotate(-1.5deg);}}
+=======
+}
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
 
 /* =========================================================================
    BARRA DE NAVEGAÇÃO
@@ -270,8 +274,11 @@ section{padding:80px 0; position:relative;}
 .timeline-titulo{font-family:var(--font-display); font-weight:600; font-size:1.2rem; margin:0 0 8px; color:var(--cocoa-deep);}
 .timeline-texto{color:var(--ink-soft); font-size:0.94rem; line-height:1.55; margin:0;}
 .timeline-personagem{position:absolute; right:-6px; bottom:-18px; width:46px; opacity:0.95; pointer-events:none;}
+<<<<<<< HEAD
 .timeline-foto{margin-top:12px; border-radius:8px; overflow:hidden; max-width:220px;}
 .timeline-foto img{width:100%; display:block;}
+=======
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
 
 /* =========================================================================
    ÁLBUM DE FOTOS
@@ -347,8 +354,11 @@ section{padding:80px 0; position:relative;}
   transition:transform .2s ease;
 }
 .evento-card:hover{transform:translateX(4px);}
+<<<<<<< HEAD
 .evento-card{cursor:pointer;}
 .evento-card.destacado{box-shadow:0 12px 26px rgba(169,70,54,0.28); border-left-color:var(--gold);}
+=======
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
 .evento-data-bloco{
   flex-shrink:0; text-align:center; background:var(--blush); border-radius:10px;
   padding:8px 12px; min-width:56px;
@@ -694,8 +704,12 @@ const CONFIG = {
   personagemCasalImg: "assets/bubu-dudu/casal-bubu-dudu.png", // imagem real do casal, fornecida por você
 };
 
+<<<<<<< HEAD
 // Fallback — aparece até você criar "momentos" reais pelo /admin.html
 const MEMORIAS_TIMELINE_PADRAO = [
+=======
+const MEMORIAS_TIMELINE = [
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
   { data: "07/10/2024", emoji: "❤️", titulo: "O começo", texto: "O dia em que decidimos escrever essa história juntos." },
   { data: "outubro/2024", emoji: "☕", titulo: "Primeiro encontro de verdade", texto: "Ainda lembro exatamente do que você vestia." },
   { data: "2025", emoji: "🌎", titulo: "Nossa primeira viagem", texto: "Descobrimos que viajar junto também é um jeito de se conhecer." },
@@ -717,12 +731,20 @@ const FOTOS_ALBUM_PADRAO = [
   { emoji:"✈️", titulo:"Aquela viagem inesquecível", data:"12/2025", local:"", frase:"Se pudesse, viveria de novo cada segundo.", tags:["viagem"] },
 ];
 
+<<<<<<< HEAD
 // Fallback — aparece até você criar "eventos" reais pelo /admin.html
 const EVENTOS_CALENDARIO_PADRAO = [
   { dataISO:"2026-10-12", emoji:"🎬", titulo:"Noite de filme", texto:"Escolher um filme e ficar juntinhos.", status:"marcado" },
   { dataISO:"2026-10-20", emoji:"🍕", titulo:"Pedir aquela pizza", texto:"Do jeitinho que a gente gosta.", status:"queremos" },
   { dataISO:"2026-11-07", emoji:"🌸", titulo:"Passear no parque", texto:"Tarde livre só nossa.", status:"queremos" },
   { dataISO:"2026-12-25", emoji:"🎄", titulo:"Natal juntos", texto:"Comemorar mais uma data no nosso jeito.", status:"marcado" },
+=======
+const EVENTOS_CALENDARIO = [
+  { dia:"12", mes:"OUT", emoji:"🎬", titulo:"Noite de filme", texto:"Escolher um filme e ficar juntinhos.", status:"marcado" },
+  { dia:"20", mes:"OUT", emoji:"🍕", titulo:"Pedir aquela pizza", texto:"Do jeitinho que a gente gosta.", status:"queremos" },
+  { dia:"07", mes:"NOV", emoji:"🌸", titulo:"Passear no parque", texto:"Tarde livre só nossa.", status:"queremos" },
+  { dia:"25", mes:"DEZ", emoji:"🎄", titulo:"Natal juntos", texto:"Comemorar mais uma data no nosso jeito.", status:"marcado" },
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
 ];
 
 const CARTA_TEXTO = `
@@ -839,6 +861,7 @@ function svgPanda(tamanho){
 })();
 
 /* =========================================================================
+<<<<<<< HEAD
    3.5. MOTOR DE SONS — efeitos sonoros gerados na hora (Web Audio API)
    -------------------------------------------------------------------------
    Nenhum arquivo de áudio é necessário para os efeitos abaixo: eles são
@@ -907,17 +930,26 @@ function tocarSom(fn){
 }
 
 /* =========================================================================
+=======
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
    4. TRANSIÇÃO CAPA → APP
    ========================================================================= */
 document.getElementById('botao-entrar').addEventListener('click', () => {
   tentarTocarAudio();
+<<<<<<< HEAD
   tocarSom(Sons.passarPagina);
+=======
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
   const capa = document.getElementById('capa');
   capa.classList.add('abrindo');
   setTimeout(() => {
     capa.classList.add('escondida');
     document.getElementById('app').style.display = 'block';
+<<<<<<< HEAD
     observarRevelacoes();
+=======
+    iniciarObservadorDeSecoes();
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
     verificarDiaEspecial();
   }, 1050);
 });
@@ -1001,6 +1033,7 @@ setInterval(renderEstadoCapa, 1000);
 /* =========================================================================
    6. LINHA DO TEMPO
    ========================================================================= */
+<<<<<<< HEAD
 let MEMORIAS_TIMELINE = MEMORIAS_TIMELINE_PADRAO;
 
 function renderTimeline(){
@@ -1029,6 +1062,19 @@ fetch('/api/dados?colecao=momentos', {cache:'no-store'})
     }
   })
   .catch(() => { /* segue com o fallback local */ });
+=======
+document.getElementById('timeline').innerHTML = MEMORIAS_TIMELINE.map((m,i) => `
+  <div class="timeline-item reveal">
+    <div class="timeline-marcador">${m.emoji}</div>
+    <div class="timeline-card">
+      <div class="timeline-data">${m.data}</div>
+      <h3 class="timeline-titulo">${m.titulo}</h3>
+      <p class="timeline-texto">${m.texto}</p>
+      ${ i % 2 === 0 ? `<div class="timeline-personagem">${svgUrsinho(46)}</div>` : `<div class="timeline-personagem">${svgPanda(46)}</div>` }
+    </div>
+  </div>
+`).join('');
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
 
 /* =========================================================================
    7. ÁLBUM DE FOTOS
@@ -1045,7 +1091,11 @@ function renderAlbum(){
     </div>
   `).join('');
   document.querySelectorAll('.polaroid').forEach(el => {
+<<<<<<< HEAD
     el.addEventListener('click', () => { tocarSom(Sons.clique); abrirFoto(parseInt(el.dataset.indice)); });
+=======
+    el.addEventListener('click', () => abrirFoto(parseInt(el.dataset.indice)));
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
   });
 }
 renderAlbum();
@@ -1053,7 +1103,11 @@ renderAlbum();
 // Busca as memórias reais salvas pela área administrativa. Se a chamada falhar
 // (site aberto sem servidor, ou API fora do ar), o álbum continua mostrando
 // o fallback acima, sem quebrar a experiência.
+<<<<<<< HEAD
 fetch('/api/dados?colecao=fotos', {cache:'no-store'})
+=======
+fetch('/api/photos', {cache:'no-store'})
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(memorias => {
     if(Array.isArray(memorias) && memorias.length > 0){
@@ -1081,13 +1135,19 @@ function abrirFoto(indice){
 document.getElementById('fechar-visualizador').addEventListener('click', () => {
   document.getElementById('visualizador').classList.remove('aberto');
 });
+<<<<<<< HEAD
 document.getElementById('foto-anterior').addEventListener('click', () => { tocarSom(Sons.passarPagina); abrirFoto(indiceFotoAtual - 1); });
 document.getElementById('foto-proxima').addEventListener('click', () => { tocarSom(Sons.passarPagina); abrirFoto(indiceFotoAtual + 1); });
+=======
+document.getElementById('foto-anterior').addEventListener('click', () => abrirFoto(indiceFotoAtual - 1));
+document.getElementById('foto-proxima').addEventListener('click', () => abrirFoto(indiceFotoAtual + 1));
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
 
 /* =========================================================================
    8. CALENDÁRIO
    ========================================================================= */
 const statusLabel = { queremos:'queremos fazer', marcado:'marcado', feito:'já fizemos' };
+<<<<<<< HEAD
 const MESES_ABREV = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
 let EVENTOS_CALENDARIO = EVENTOS_CALENDARIO_PADRAO;
 
@@ -1125,6 +1185,21 @@ fetch('/api/dados?colecao=eventos', {cache:'no-store'})
     }
   })
   .catch(() => { /* segue com o fallback local */ });
+=======
+document.getElementById('calendario-lista').innerHTML = EVENTOS_CALENDARIO.map(e => `
+  <div class="evento-card reveal">
+    <div class="evento-data-bloco">
+      <div class="evento-dia">${e.dia}</div>
+      <div class="evento-mes">${e.mes}</div>
+    </div>
+    <div class="evento-corpo">
+      <p class="evento-titulo">${e.emoji} ${e.titulo}</p>
+      <p class="evento-texto">${e.texto}</p>
+      <div class="evento-tags-linha"><span class="evento-status" data-status="${e.status}">${statusLabel[e.status]}</span></div>
+    </div>
+  </div>
+`).join('');
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
 
 /* =========================================================================
    9. CARTA DE AMOR
@@ -1132,7 +1207,10 @@ fetch('/api/dados?colecao=eventos', {cache:'no-store'})
 document.getElementById('envelope').addEventListener('click', function(){
   this.classList.add('aberto');
   tentarTocarAudio();
+<<<<<<< HEAD
   tocarSom(Sons.abrirEnvelope);
+=======
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
   setTimeout(() => {
     const papel = document.getElementById('carta-papel');
     papel.innerHTML = CARTA_TEXTO + `
@@ -1155,7 +1233,11 @@ document.getElementById('cartas-grade').innerHTML = COISAS_QUE_AMO.map((c,i) => 
   </div>
 `).join('');
 document.querySelectorAll('.flip-card').forEach(el => {
+<<<<<<< HEAD
   el.addEventListener('click', () => { tocarSom(Sons.virarCartao); el.classList.toggle('virado'); });
+=======
+  el.addEventListener('click', () => el.classList.toggle('virado'));
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
 });
 
 /* =========================================================================
@@ -1183,13 +1265,20 @@ document.querySelectorAll('.nav-links button').forEach(btn => {
 });
 
 /* =========================================================================
+<<<<<<< HEAD
    13. ANIMAÇÕES AO ROLAR (reveal on scroll) + som ao revelar cada memória
    ========================================================================= */
 function observarRevelacoes(){
+=======
+   13. ANIMAÇÕES AO ROLAR (reveal on scroll)
+   ========================================================================= */
+function iniciarObservadorDeSecoes(){
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
   const observador = new IntersectionObserver((entradas) => {
     entradas.forEach(entrada => {
       if(entrada.isIntersecting){
         entrada.target.classList.add('visivel');
+<<<<<<< HEAD
         if(entrada.target.classList.contains('timeline-item') && !entrada.target.dataset.tocado){
           entrada.target.dataset.tocado = '1';
           tocarSom(Sons.revelar);
@@ -1198,6 +1287,12 @@ function observarRevelacoes(){
     });
   }, {threshold:0.15});
   document.querySelectorAll('.reveal:not(.visivel)').forEach(el => observador.observe(el));
+=======
+      }
+    });
+  }, {threshold:0.15});
+  document.querySelectorAll('.reveal').forEach(el => observador.observe(el));
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
 }
 
 /* =========================================================================
@@ -1243,7 +1338,10 @@ function criarCoracaoSecreto(top, left, indice){
   document.body.appendChild(btn);
 }
 function abrirSurpresa(indice){
+<<<<<<< HEAD
   tocarSom(Sons.surpresa);
+=======
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
   const s = SURPRESAS[indice % SURPRESAS.length];
   document.getElementById('surpresa-titulo').textContent = s.titulo;
   document.getElementById('surpresa-texto').textContent = s.texto;
@@ -1289,7 +1387,10 @@ function verificarDiaEspecial(){
     const overlay = document.getElementById('dia-especial-overlay');
     overlay.classList.add('aberto');
     dispararConfete();
+<<<<<<< HEAD
     tocarSom(Sons.comemoracao);
+=======
+>>>>>>> feaee4e2b9bc1a9e30a337ba70f9de2aeee88b81
     sessionStorage.setItem('nossaHistoriaDiaEspecialVisto', '1');
   }
 }

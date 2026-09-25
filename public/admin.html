@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Área administrativa — Nossa História</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FBF3EA; --paper:#FFFBF5; --blush:#F4C9C2; --rose-deep:#A94636;
+  --cocoa-deep:#4A3226; --ink-soft:#8A6F60;
+  --font-display:'Fraunces', Georgia, serif; --font-body:'Quicksand', sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--cream); font-family:var(--font-body); color:var(--cocoa-deep);}
+header{padding:26px 20px 10px; text-align:center;}
+header h1{font-family:var(--font-display); font-style:italic; font-weight:500; color:var(--rose-deep); margin:0 0 4px;}
+header p{color:var(--ink-soft); margin:0; font-size:0.9rem;}
+main{max-width:640px; margin:0 auto; padding:20px;}
+
+.abas{display:flex; gap:6px; margin-bottom:18px; overflow-x:auto;}
+.abas button{
+  flex-shrink:0; background:var(--paper); border:1px solid rgba(107,74,58,0.15); color:var(--ink-soft);
+  padding:9px 16px; border-radius:999px; font-weight:700; font-size:0.85rem;
+}
+.abas button.ativa{background:var(--rose-deep); color:#fff; border-color:var(--rose-deep);}
+
+.painel{display:none;}
+.painel.ativo{display:block;}
+
+.cartao{background:var(--paper); border-radius:14px; padding:24px; box-shadow:0 10px 26px rgba(74,50,38,0.12); margin-bottom:26px;}
+.cartao h2{font-family:var(--font-display); font-size:1.2rem; margin:0 0 14px; color:var(--cocoa-deep);}
+label{display:block; font-size:0.82rem; font-weight:700; color:var(--ink-soft); margin:14px 0 6px;}
+input[type=text], input[type=password], input[type=date], select, textarea{
+  width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(107,74,58,0.2);
+  font-family:inherit; font-size:0.95rem; background:#fff;
+}
+textarea{resize:vertical; min-height:64px;}
+input[type=file]{margin-top:4px;}
+.linha-dupla{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.botao{
+  margin-top:18px; background:var(--rose-deep); color:#fff; border:none; padding:11px 22px;
+  border-radius:999px; font-weight:700; font-size:0.95rem;
+}
+.botao:disabled{opacity:0.6;}
+.mensagem{margin-top:12px; font-size:0.88rem;}
+.mensagem.erro{color:#B4453A;}
+.mensagem.sucesso{color:#4E7A44;}
+.lista-itens{display:flex; flex-direction:column; gap:10px;}
+.item-linha{
+  display:flex; gap:12px; align-items:center; background:#fff; border-radius:10px; padding:10px;
+  box-shadow:0 4px 12px rgba(74,50,38,0.08);
+}
+.item-linha img{width:52px; height:52px; object-fit:cover; border-radius:8px; flex-shrink:0;}
+.item-linha .emoji-fallback{width:52px; height:52px; border-radius:8px; flex-shrink:0; background:var(--blush); display:flex; align-items:center; justify-content:center; font-size:1.4rem;}
+.item-linha .info{flex:1; min-width:0;}
+.item-linha .info strong{display:block; font-size:0.92rem;}
+.item-linha .info span{display:block; font-size:0.78rem; color:var(--ink-soft);}
+.item-linha button{background:none; border:none; color:#B4453A; font-size:0.8rem; font-weight:700; flex-shrink:0;}
+a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:0.85rem; text-decoration:none;}
+.aviso-vazio{color:#8A6F60; font-size:0.88rem;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Área administrativa</h1>
+  <p>Só para vocês dois — adicione ou remova conteúdo do site.</p>
+</header>
+<main>
+
+  <div class="abas">
+    <button data-aba="fotos" class="ativa">📸 Álbum</button>
+    <button data-aba="momentos">🕰️ Linha do tempo</button>
+    <button data-aba="eventos">📅 Calendário</button>
+  </div>
+
+  <!-- =================== ÁLBUM =================== -->
+  <div class="painel ativo" id="painel-fotos">
+    <div class="cartao">
+      <h2>Adicionar uma foto</h2>
+      <form class="form-item" data-colecao="fotos">
+        <label>Senha</label>
+        <input type="password" name="senha" required>
+        <label>Foto</label>
+        <input type="file" name="foto" accept="image/*" required>
+        <label>Título</label>
+        <input type="text" name="titulo" placeholder="Ex: Nosso primeiro passeio" required>
+        <div class="linha-dupla">
+          <div><label>Data</label><input type="text" name="data" placeholder="Ex: 15/10/2024"></div>
+          <div><label>Local</label><input type="text" name="local" placeholder="Ex: praia de..."></div>
+        </div>
+        <label>Descrição / frase</label>
+        <textarea name="frase" placeholder="Uma frase sobre esse momento"></textarea>
+        <label>Tags (separadas por vírgula)</label>
+        <input type="text" name="tags" placeholder="Ex: viagem, 2025">
+        <button type="submit" class="botao">Salvar foto</button>
+        <div class="mensagem"></div>
+      </form>
+    </div>
+    <div class="cartao">
+      <h2>Fotos salvas</h2>
+      <label>Senha (para remover)</label>
+      <input type="password" class="senha-lista" placeholder="digite para habilitar remoção">
+      <div class="lista-itens" style="margin-top:14px;" data-lista="fotos"></div>
+    </div>
+  </div>
+
+  <!-- =================== LINHA DO TEMPO =================== -->
+  <div class="painel" id="painel-momentos">
+    <div class="cartao">
+      <h2>Adicionar um momento à linha do tempo</h2>
+      <form class="form-item" data-colecao="momentos">
+        <label>Senha</label>
+        <input type="password" name="senha" required>
+        <label>Título</label>
+        <input type="text" name="titulo" placeholder="Ex: Nossa primeira viagem" required>
+        <div class="linha-dupla">
+          <div><label>Data (texto livre)</label><input type="text" name="data" placeholder="Ex: 07/10/2024 ou 'outubro/2025'"></div>
+          <div><label>Emoji</label><input type="text" name="emoji" placeholder="❤️" value="❤️"></div>
+        </div>
+        <label>Descrição</label>
+        <textarea name="texto" placeholder="O que aconteceu nesse momento"></textarea>
+        <label>Foto (opcional)</label>
+        <input type="file" name="foto" accept="image/*">
+        <button type="submit" class="botao">Salvar momento</button>
+        <div class="mensagem"></div>
+      </form>
+    </div>
+    <div class="cartao">
+      <h2>Momentos salvos</h2>
+      <label>Senha (para remover)</label>
+      <input type="password" class="senha-lista" placeholder="digite para habilitar remoção">
+      <div class="lista-itens" style="margin-top:14px;" data-lista="momentos"></div>
+    </div>
+  </div>
+
+  <!-- =================== CALENDÁRIO =================== -->
+  <div class="painel" id="painel-eventos">
+    <div class="cartao">
+      <h2>Adicionar um evento ao calendário</h2>
+      <form class="form-item" data-colecao="eventos">
+        <label>Senha</label>
+        <input type="password" name="senha" required>
+        <label>Título</label>
+        <input type="text" name="titulo" placeholder="Ex: Noite de filme" required>
+        <div class="linha-dupla">
+          <div><label>Data</label><input type="date" name="dataISO" required></div>
+          <div><label>Emoji</label><input type="text" name="emoji" placeholder="🎬" value="❤️"></div>
+        </div>
+        <label>Descrição</label>
+        <textarea name="texto" placeholder="Do que se trata esse momento"></textarea>
+        <div class="linha-dupla">
+          <div><label>Local</label><input type="text" name="local" placeholder="Opcional"></div>
+          <div><label>Categoria</label><input type="text" name="categoria" placeholder="Ex: viagem, filme..."></div>
+        </div>
+        <label>Status</label>
+        <select name="status">
+          <option value="queremos">💭 Queremos fazer</option>
+          <option value="marcado">📅 Marcado</option>
+          <option value="feito">❤️ Já fizemos</option>
+        </select>
+        <button type="submit" class="botao">Salvar evento</button>
+        <div class="mensagem"></div>
+      </form>
+    </div>
+    <div class="cartao">
+      <h2>Eventos salvos</h2>
+      <label>Senha (para remover)</label>
+      <input type="password" class="senha-lista" placeholder="digite para habilitar remoção">
+      <div class="lista-itens" style="margin-top:14px;" data-lista="eventos"></div>
+    </div>
+  </div>
+
+  <a class="voltar" href="index.html">← voltar para o site</a>
+</main>
+
+<script>
+document.querySelectorAll('.abas button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.abas button').forEach(b => b.classList.remove('ativa'));
+    document.querySelectorAll('.painel').forEach(p => p.classList.remove('ativo'));
+    btn.classList.add('ativa');
+    document.getElementById('painel-' + btn.dataset.aba).classList.add('ativo');
+  });
+});
+
+const APRESENTACAO = {
+  fotos: (m) => ({ titulo: m.titulo, subtitulo: `${m.data || ''}${m.local ? ' · ' + m.local : ''}`, emoji: m.emoji || '📷' }),
+  momentos: (m) => ({ titulo: m.titulo, subtitulo: m.data || '', emoji: m.emoji || '❤️' }),
+  eventos: (m) => ({ titulo: m.titulo, subtitulo: m.dataISO || '', emoji: m.emoji || '❤️' }),
+};
+
+async function carregarLista(colecao){
+  const container = document.querySelector(`[data-lista="${colecao}"]`);
+  const resposta = await fetch(`/api/dados?colecao=${colecao}`, { cache: 'no-store' });
+  const itens = await resposta.json();
+
+  if(!Array.isArray(itens) || itens.length === 0){
+    container.innerHTML = '<p class="aviso-vazio">Nada salvo ainda nesta seção.</p>';
+    return;
+  }
+
+  const apresentar = APRESENTACAO[colecao];
+  container.innerHTML = itens.map(item => {
+    const { titulo, subtitulo, emoji } = apresentar(item);
+    const miniatura = item.img
+      ? `<img src="${item.img}" alt="${titulo}">`
+      : `<div class="emoji-fallback">${emoji}</div>`;
+    return `
+      <div class="item-linha">
+        ${miniatura}
+        <div class="info"><strong>${titulo}</strong><span>${subtitulo}</span></div>
+        <button data-id="${item.id}" data-colecao="${colecao}">remover</button>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('button[data-id]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const painel = btn.closest('.painel');
+      const senha = painel.querySelector('.senha-lista').value;
+      if(!senha){ alert('Digite a senha para poder remover.'); return; }
+      if(!confirm('Remover este item? Essa ação não pode ser desfeita.')) return;
+      const resp = await fetch(`/api/dados?colecao=${btn.dataset.colecao}&id=${btn.dataset.id}&senha=${encodeURIComponent(senha)}`, { method: 'DELETE' });
+      const dados = await resp.json();
+      if(!resp.ok){ alert(dados.erro || 'Não foi possível remover.'); return; }
+      carregarLista(colecao);
+    });
+  });
+}
+
+['fotos','momentos','eventos'].forEach(carregarLista);
+
+document.querySelectorAll('.form-item').forEach(form => {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const colecao = form.dataset.colecao;
+    const botao = form.querySelector('.botao');
+    const mensagem = form.querySelector('.mensagem');
+    botao.disabled = true;
+    mensagem.textContent = 'Enviando...';
+    mensagem.className = 'mensagem';
+
+    const formData = new FormData(form);
+    formData.set('colecao', colecao);
+
+    try {
+      const resposta = await fetch('/api/dados', { method: 'POST', body: formData });
+      const dados = await resposta.json();
+      if(!resposta.ok){
+        mensagem.textContent = dados.erro || 'Não foi possível salvar.';
+        mensagem.className = 'mensagem erro';
+      } else {
+        mensagem.textContent = 'Salvo com sucesso! ❤️';
+        mensagem.className = 'mensagem sucesso';
+        form.reset();
+        carregarLista(colecao);
+      }
+    } catch (erro) {
+      mensagem.textContent = 'Erro de conexão. Tente novamente.';
+      mensagem.className = 'mensagem erro';
+    } finally {
+      botao.disabled = false;
+    }
+  });
+});
+</script>
+</body>
+</html>

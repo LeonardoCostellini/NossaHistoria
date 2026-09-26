@@ -1,13 +1,13 @@
 // api/dados.js
 //
-// Uma rota genérica que serve de "banco de dados" para três coleções:
-//   fotos     -> álbum de memórias com foto
-//   momentos  -> linha do tempo do relacionamento (foto opcional)
-//   eventos   -> calendário de próximos momentos (sem foto)
+// Uma rota genérica que serve de "banco de dados" para várias coleções.
+// Duas formas de coleção:
+//   "lista"  -> vários itens com id (fotos, momentos, eventos, coisas, planos)
+//   "unico"  -> um único objeto, sem lista (config, carta)
 //
-//   GET    /api/dados?colecao=fotos|momentos|eventos            -> lista tudo
+//   GET    /api/dados?colecao=X                    -> lista tudo (ou o objeto, se "unico")
 //   POST   /api/dados            (multipart/form-data, campo "colecao")
-//   DELETE /api/dados?colecao=X&id=Y&senha=Z
+//   DELETE /api/dados?colecao=X&id=Y&senha=Z        (só para coleções "lista")
 //
 // Cada coleção vira um arquivo JSON ("manifesto") guardado no Vercel Blob.
 // As fotos (quando existem) também vão para o Blob, como arquivo binário.
@@ -25,6 +25,7 @@ export const config = {
 
 const COLECOES = {
   fotos: {
+    tipo: 'lista',
     manifesto: 'memorias/fotos.json',
     permiteFoto: true,
     obrigatorioFoto: true,
@@ -37,6 +38,7 @@ const COLECOES = {
     }),
   },
   momentos: {
+    tipo: 'lista',
     manifesto: 'memorias/momentos.json',
     permiteFoto: true,
     obrigatorioFoto: false,
@@ -48,6 +50,7 @@ const COLECOES = {
     }),
   },
   eventos: {
+    tipo: 'lista',
     manifesto: 'memorias/eventos.json',
     permiteFoto: false,
     obrigatorioFoto: false,
@@ -61,6 +64,46 @@ const COLECOES = {
       status: campoTexto(fields, 'status') || 'queremos',
     }),
   },
+  coisas: {
+    tipo: 'lista',
+    manifesto: 'memorias/coisas.json',
+    permiteFoto: false,
+    obrigatorioFoto: false,
+    montar: (fields) => ({
+      emoji: campoTexto(fields, 'emoji') || '❤️',
+      frente: campoTexto(fields, 'frente') || 'Sem título',
+      verso: campoTexto(fields, 'verso'),
+    }),
+  },
+  planos: {
+    tipo: 'lista',
+    manifesto: 'memorias/planos.json',
+    permiteFoto: false,
+    obrigatorioFoto: false,
+    montar: (fields) => ({
+      titulo: campoTexto(fields, 'titulo') || 'Sem título',
+      texto: campoTexto(fields, 'texto'),
+      status: campoTexto(fields, 'status') || 'queremos',
+    }),
+  },
+  config: {
+    tipo: 'unico',
+    manifesto: 'memorias/config.json',
+    montar: (fields) => ({
+      nomeDela: campoTexto(fields, 'nomeDela'),
+      meuNome: campoTexto(fields, 'meuNome'),
+      inicioRelacionamento: campoTexto(fields, 'inicioRelacionamento'),
+      dataComemorativa: campoTexto(fields, 'dataComemorativa'),
+    }),
+  },
+  carta: {
+    tipo: 'unico',
+    manifesto: 'memorias/carta.json',
+    montar: (fields) => ({
+      texto: campoTexto(fields, 'texto'),
+      assinatura: campoTexto(fields, 'assinatura') || 'com todo o meu amor',
+    }),
+  },
 };
 
 function campoTexto(fields, nome) {
@@ -69,17 +112,17 @@ function campoTexto(fields, nome) {
   return (valor || '').toString().trim();
 }
 
-async function lerManifesto(caminho) {
+async function lerManifesto(caminho, padrao) {
   try {
     const { blobs } = await list({ prefix: caminho });
     const encontrado = blobs.find((b) => b.pathname === caminho);
-    if (!encontrado) return [];
+    if (!encontrado) return padrao;
     const resposta = await fetch(encontrado.url, { cache: 'no-store' });
-    if (!resposta.ok) return [];
+    if (!resposta.ok) return padrao;
     return await resposta.json();
   } catch (erro) {
     console.error('Erro ao ler manifesto:', erro);
-    return [];
+    return padrao;
   }
 }
 
@@ -108,7 +151,8 @@ export default async function handler(req, res) {
       const config = COLECOES[colecao];
       if (!config) return res.status(400).json({ erro: 'Coleção inválida: ' + colecao });
 
-      const dados = await lerManifesto(config.manifesto);
+      const padrao = config.tipo === 'unico' ? null : [];
+      const dados = await lerManifesto(config.manifesto, padrao);
       res.setHeader('Cache-Control', 'no-store');
       return res.status(200).json(dados);
     }
@@ -155,6 +199,14 @@ export default async function handler(req, res) {
         }
       }
 
+      // ---- Coleção "única" (config / carta): substitui o objeto inteiro ----
+      if (config.tipo === 'unico') {
+        const item = { ...config.montar(fields), atualizadoEm: new Date().toISOString() };
+        await salvarManifesto(config.manifesto, item);
+        return res.status(200).json({ ok: true, item });
+      }
+
+      // ---- Coleção "lista": adiciona um novo item ----
       const item = {
         id: Date.now().toString(),
         ...config.montar(fields),
@@ -162,7 +214,7 @@ export default async function handler(req, res) {
         criadoEm: new Date().toISOString(),
       };
 
-      const lista = await lerManifesto(config.manifesto);
+      const lista = await lerManifesto(config.manifesto, []);
       lista.unshift(item);
       await salvarManifesto(config.manifesto, lista);
 
@@ -175,10 +227,11 @@ export default async function handler(req, res) {
       const colecao = parametros.get('colecao');
       const config = COLECOES[colecao];
       if (!config) return res.status(400).json({ erro: 'Coleção inválida: ' + colecao });
+      if (config.tipo === 'unico') return res.status(400).json({ erro: 'Esta seção não tem itens para remover individualmente.' });
       if (!senhaValida(senha)) return res.status(401).json({ erro: 'Senha incorreta.' });
       if (!id) return res.status(400).json({ erro: 'Informe o id do item a remover.' });
 
-      const lista = await lerManifesto(config.manifesto);
+      const lista = await lerManifesto(config.manifesto, []);
       const item = lista.find((m) => m.id === id);
       if (!item) return res.status(404).json({ erro: 'Item não encontrado.' });
 

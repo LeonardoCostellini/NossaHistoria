@@ -704,15 +704,23 @@ footer .footer-coracao{color:var(--rose-deep);}
    No futuro isto pode virar chamadas a Firebase/Supabase/API própria,
    mantendo exatamente este mesmo formato de objetos.
    ========================================================================= */
-const CONFIG = {
-  nomeDela: "Roberta Hikaru Miyazaki",
-  meuNome: "Leonardo Barreiro Costellini",
+// Caminhos de arquivo — isso continua fixo no código (não muda pelo admin)
+const ATIVOS = {
+  audioSrc: "assets/audio/fundo.mp3", // opcional — coloque seu arquivo aqui
+  personagemCasalImg: "assets/bubu-dudu/casal-bubu-dudu.png",
+  personagemDuduImg: "assets/bubu-dudu/dudu.png",
+  personagemBubuImg: "assets/bubu-dudu/bubu.png",
+};
+
+// Nomes e datas — isto é só o FALLBACK; o valor de verdade vem da aba
+// "⚙️ Configurações" do /admin. CONFIG é "let" porque é atualizado assim
+// que a busca à API responder (função atualizarConfig, mais abaixo).
+let CONFIG = {
+  ...ATIVOS,
+  nomeDela: "[NOME DELA]",
+  meuNome: "[MEU NOME]",
   inicioRelacionamento: "2024-10-07T00:00:00",
   dataComemorativa: "2026-10-07T00:00:00",
-  audioSrc: "assets/audio/fundo.mp3", // opcional — coloque seu arquivo aqui
-  personagemCasalImg: "assets/bubu-dudu/casal-bubu-dudu.png", // imagem real do casal, fornecida por você
-  personagemDuduImg: "assets/bubu-dudu/dudu.png", // Dudu (ursinho marrom), fornecido por você, sem fundo
-  personagemBubuImg: "assets/bubu-dudu/bubu.png", // Bubu (personagem branco), fornecido por você
 };
 
 // Fallback — aparece até você criar "momentos" reais pelo /admin.html
@@ -746,15 +754,20 @@ const EVENTOS_CALENDARIO_PADRAO = [
   { dataISO:"2026-12-25", emoji:"🎄", titulo:"Natal juntos", texto:"Comemorar mais uma data no nosso jeito.", status:"marcado" },
 ];
 
-const CARTA_TEXTO = `
-  <p>Meu amor,</p>
-  <p>Se alguém me perguntasse, há dois anos, onde eu estaria hoje, eu jamais imaginaria uma resposta tão boa quanto essa: aqui, ao seu lado, escrevendo mais um capítulo da nossa história.</p>
-  <p>Você trouxe leveza pros meus dias difíceis e fez os dias bons ficarem ainda melhores. Cada memória que guardamos juntos nesses dois anos vale mais do que eu conseguiria colocar em palavras — mas vou continuar tentando, todos os dias.</p>
-  <p>Obrigado por escrever essa história comigo. Ainda temos muitas páginas em branco pela frente, e eu não quero vivê-las com mais ninguém.</p>
-`;
-const CARTA_ASSINATURA = "com todo o meu amor";
+// Fallback — vale até você escrever a carta de verdade pela aba "💌 Carta" do /admin
+const CARTA_PADRAO = {
+  texto: `Meu amor,
 
-const COISAS_QUE_AMO = [
+Se alguém me perguntasse, há dois anos, onde eu estaria hoje, eu jamais imaginaria uma resposta tão boa quanto essa: aqui, ao seu lado, escrevendo mais um capítulo da nossa história.
+
+Você trouxe leveza pros meus dias difíceis e fez os dias bons ficarem ainda melhores. Cada memória que guardamos juntos nesses dois anos vale mais do que eu conseguiria colocar em palavras — mas vou continuar tentando, todos os dias.
+
+Obrigado por escrever essa história comigo. Ainda temos muitas páginas em branco pela frente, e eu não quero vivê-las com mais ninguém.`,
+  assinatura: "com todo o meu amor",
+};
+
+// Fallback — aparece até você criar itens reais pela aba "💗 Sobre vocês" do /admin
+const COISAS_QUE_AMO_PADRAO = [
   { emoji:"💗", frente:"Seu sorriso", verso:"Ele consegue mudar completamente o meu dia." },
   { emoji:"🧸", frente:"Seu jeito carinhoso", verso:"Você cuida de mim de um jeito que eu nunca tinha sentido." },
   { emoji:"😂", frente:"Quando você começa a rir", verso:"E não consegue mais parar — é a minha coisa favorita." },
@@ -763,18 +776,15 @@ const COISAS_QUE_AMO = [
   { emoji:"🫶", frente:"O jeito que você me escuta", verso:"Sinto que posso ser eu mesmo, sempre." },
 ];
 
-const PLANOS_FUTUROS = {
-  "💭 Queremos fazer": [
-    { titulo:"Viajar juntos para um lugar novo", texto:"Ainda não decidimos onde, e tá tudo bem." },
-    { titulo:"Assistir aquela série que todo mundo fala", texto:"Maratona no fim de semana." },
-  ],
-  "📅 Marcado": [
-    { titulo:"Jantar de aniversário", texto:"Já reservamos o lugar." },
-  ],
-  "❤️ Já fizemos": [
-    { titulo:"Primeira viagem juntos", texto:"E foi incrível." },
-  ],
-};
+// Fallback — aparece até você criar planos reais pela aba "🎯 Planos" do /admin
+const PLANOS_FUTUROS_PADRAO = [
+  { titulo:"Viajar juntos para um lugar novo", texto:"Ainda não decidimos onde, e tá tudo bem.", status:"queremos" },
+  { titulo:"Assistir aquela série que todo mundo fala", texto:"Maratona no fim de semana.", status:"queremos" },
+  { titulo:"Jantar de aniversário", texto:"Já reservamos o lugar.", status:"marcado" },
+  { titulo:"Primeira viagem juntos", texto:"E foi incrível.", status:"feito" },
+];
+const PLANOS_STATUS_LABEL = { queremos:"💭 Queremos fazer", marcado:"📅 Marcado", feito:"❤️ Já fizemos" };
+const PLANOS_STATUS_ORDEM = ["queremos","marcado","feito"];
 
 /* =========================================================================
    2. ILUSTRAÇÃO ORIGINAL — casal ursinho & panda (SVG próprio)
@@ -998,11 +1008,10 @@ function calcularDiferenca(inicio, agora){
   return {anos, meses, dias, horas, minutos, segundos};
 }
 
-const inicio = new Date(CONFIG.inicioRelacionamento);
-const dataComemorativa = new Date(CONFIG.dataComemorativa);
-
 function renderContador(){
   const agora = new Date();
+  const inicio = new Date(CONFIG.inicioRelacionamento);
+  const dataComemorativa = new Date(CONFIG.dataComemorativa);
   const d = calcularDiferenca(inicio, agora);
   const grade = document.getElementById('contador-grade');
   const itens = [
@@ -1028,9 +1037,9 @@ setInterval(renderContador, 1000);
 
 function renderEstadoCapa(){
   const agora = new Date();
+  const dataComemorativa = new Date(CONFIG.dataComemorativa);
   const elemento = document.getElementById('hero-estado-especial');
   const msDia = 24*60*60*1000;
-  const diffDias = Math.floor((dataComemorativa - agora)/msDia);
   const mesmodia = agora.toDateString() === dataComemorativa.toDateString();
 
   if(mesmodia){
@@ -1184,14 +1193,21 @@ fetch('/api/dados?colecao=eventos', {cache:'no-store'})
 /* =========================================================================
    9. CARTA DE AMOR
    ========================================================================= */
+let CARTA = CARTA_PADRAO;
+fetch('/api/dados?colecao=carta', {cache:'no-store'})
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(dados => { if(dados && dados.texto) CARTA = dados; })
+  .catch(() => { /* segue com o fallback local */ });
+
 document.getElementById('envelope').addEventListener('click', function(){
   this.classList.add('aberto');
   tentarTocarAudio();
   tocarSom(Sons.abrirEnvelope);
   setTimeout(() => {
     const papel = document.getElementById('carta-papel');
-    papel.innerHTML = CARTA_TEXTO + `
-      <div class="carta-assinatura">${CARTA_ASSINATURA}, ${CONFIG.meuNome}</div>
+    const paragrafos = CARTA.texto.split('\n').map(p => p.trim()).filter(Boolean).map(p => `<p>${p}</p>`).join('');
+    papel.innerHTML = paragrafos + `
+      <div class="carta-assinatura">${CARTA.assinatura}, ${CONFIG.meuNome}</div>
       <div class="carta-data">07 de outubro de 2026</div>`;
     papel.classList.add('mostrando');
     papel.scrollIntoView({behavior:'smooth', block:'center'});
@@ -1201,32 +1217,53 @@ document.getElementById('envelope').addEventListener('click', function(){
 /* =========================================================================
    10. CARTÕES "COISAS QUE AMO EM VOCÊ"
    ========================================================================= */
-document.getElementById('cartas-grade').innerHTML = COISAS_QUE_AMO.map((c,i) => `
-  <div class="flip-card reveal" data-i="${i}">
-    <div class="flip-card-inner">
-      <div class="flip-face flip-frente"><span>${c.emoji}</span>${c.frente}</div>
-      <div class="flip-face flip-verso">${c.verso}</div>
+let COISAS_QUE_AMO = COISAS_QUE_AMO_PADRAO;
+function renderCoisas(){
+  document.getElementById('cartas-grade').innerHTML = COISAS_QUE_AMO.map((c,i) => `
+    <div class="flip-card reveal visivel" data-i="${i}">
+      <div class="flip-card-inner">
+        <div class="flip-face flip-frente"><span>${c.emoji}</span>${c.frente}</div>
+        <div class="flip-face flip-verso">${c.verso}</div>
+      </div>
     </div>
-  </div>
-`).join('');
-document.querySelectorAll('.flip-card').forEach(el => {
-  el.addEventListener('click', () => { tocarSom(Sons.virarCartao); el.classList.toggle('virado'); });
-});
+  `).join('');
+  document.querySelectorAll('.flip-card').forEach(el => {
+    el.addEventListener('click', () => { tocarSom(Sons.virarCartao); el.classList.toggle('virado'); });
+  });
+}
+renderCoisas();
+fetch('/api/dados?colecao=coisas', {cache:'no-store'})
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(itens => { if(Array.isArray(itens) && itens.length > 0){ COISAS_QUE_AMO = itens; renderCoisas(); } })
+  .catch(() => { /* segue com o fallback local */ });
 
 /* =========================================================================
    11. PLANOS FUTUROS
    ========================================================================= */
-document.getElementById('planos-colunas').innerHTML = Object.entries(PLANOS_FUTUROS).map(([titulo, itens]) => `
-  <div class="reveal">
-    <p class="planos-coluna-titulo">${titulo}</p>
-    ${itens.map(p => `
-      <div class="plano-card">
-        <p class="plano-titulo">${p.titulo}</p>
-        <p class="plano-texto">${p.texto}</p>
-      </div>
-    `).join('')}
-  </div>
-`).join('');
+let PLANOS_FUTUROS = PLANOS_FUTUROS_PADRAO;
+function renderPlanos(){
+  const grupos = PLANOS_STATUS_ORDEM.map(status => ({
+    status, label: PLANOS_STATUS_LABEL[status],
+    itens: PLANOS_FUTUROS.filter(p => (p.status || 'queremos') === status),
+  })).filter(g => g.itens.length > 0);
+
+  document.getElementById('planos-colunas').innerHTML = grupos.map(g => `
+    <div class="reveal visivel">
+      <p class="planos-coluna-titulo">${g.label}</p>
+      ${g.itens.map(p => `
+        <div class="plano-card">
+          <p class="plano-titulo">${p.titulo}</p>
+          <p class="plano-texto">${p.texto}</p>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+renderPlanos();
+fetch('/api/dados?colecao=planos', {cache:'no-store'})
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(itens => { if(Array.isArray(itens) && itens.length > 0){ PLANOS_FUTUROS = itens; renderPlanos(); } })
+  .catch(() => { /* segue com o fallback local */ });
 
 /* =========================================================================
    12. NAVEGAÇÃO ENTRE SEÇÕES
@@ -1339,6 +1376,7 @@ function dispararConfete(){
 }
 function verificarDiaEspecial(){
   const agora = new Date();
+  const dataComemorativa = new Date(CONFIG.dataComemorativa);
   const mesmodia = agora.toDateString() === dataComemorativa.toDateString();
   if(mesmodia && !sessionStorage.getItem('nossaHistoriaDiaEspecialVisto')){
     const overlay = document.getElementById('dia-especial-overlay');
@@ -1353,11 +1391,31 @@ document.getElementById('fechar-dia-especial').addEventListener('click', () => {
 });
 
 /* =========================================================================
-   17. NOMES — aplica CONFIG nos textos da página
+   17. NOMES E DATAS — aplica CONFIG nos textos da página, e busca os
+       valores reais salvos pela aba "⚙️ Configurações" do /admin.html
    ========================================================================= */
-document.getElementById('nome-dela-capa').textContent = CONFIG.nomeDela;
-document.getElementById('nome-dela-rodape').textContent = CONFIG.nomeDela;
-document.getElementById('meu-nome-rodape').textContent = CONFIG.meuNome;
+function aplicarConfigNaPagina(){
+  document.getElementById('nome-dela-capa').textContent = CONFIG.nomeDela;
+  document.getElementById('nome-dela-rodape').textContent = CONFIG.nomeDela;
+  document.getElementById('meu-nome-rodape').textContent = CONFIG.meuNome;
+}
+aplicarConfigNaPagina();
+
+fetch('/api/dados?colecao=config', {cache:'no-store'})
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(dados => {
+    if(dados && (dados.nomeDela || dados.meuNome)){
+      CONFIG = {
+        ...CONFIG,
+        ...dados,
+        // datas: se vierem só como "AAAA-MM-DD" (input type="date"), completa a hora
+        inicioRelacionamento: dados.inicioRelacionamento ? dados.inicioRelacionamento + (dados.inicioRelacionamento.includes('T') ? '' : 'T00:00:00') : CONFIG.inicioRelacionamento,
+        dataComemorativa: dados.dataComemorativa ? dados.dataComemorativa + (dados.dataComemorativa.includes('T') ? '' : 'T00:00:00') : CONFIG.dataComemorativa,
+      };
+      aplicarConfigNaPagina();
+    }
+  })
+  .catch(() => { /* segue com o fallback local */ });
 
 /* =========================================================================
    18. PREPARADO PARA O FUTURO (não ativo ainda)

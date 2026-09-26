@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Área administrativa — Nossa História</title>
+<link rel="icon" type="image/png" href="/assets/bubu-dudu/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -14,10 +15,37 @@
 }
 *{box-sizing:border-box;}
 body{margin:0; background:var(--cream); font-family:var(--font-body); color:var(--cocoa-deep);}
-header{padding:26px 20px 10px; text-align:center;}
+header{padding:26px 20px 10px; text-align:center; position:relative;}
 header h1{font-family:var(--font-display); font-style:italic; font-weight:500; color:var(--rose-deep); margin:0 0 4px;}
 header p{color:var(--ink-soft); margin:0; font-size:0.9rem;}
 main{max-width:640px; margin:0 auto; padding:20px;}
+
+/* ---------- Tela de login ---------- */
+#tela-login{
+  min-height:80vh; display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.login-cartao{
+  background:var(--paper); border-radius:16px; padding:32px 28px; max-width:360px; width:100%;
+  box-shadow:0 12px 30px rgba(74,50,38,0.15); text-align:center;
+}
+.login-cartao h2{font-family:var(--font-display); font-style:italic; color:var(--rose-deep); margin:0 0 6px;}
+.login-cartao p{color:var(--ink-soft); font-size:0.88rem; margin:0 0 18px;}
+.login-cartao input{
+  width:100%; padding:11px 14px; border-radius:10px; border:1px solid rgba(107,74,58,0.2);
+  font-family:inherit; font-size:1rem; text-align:center;
+}
+.login-cartao button{
+  margin-top:14px; width:100%; background:var(--rose-deep); color:#fff; border:none; padding:11px;
+  border-radius:999px; font-weight:700; font-size:0.95rem;
+}
+.login-erro{color:#B4453A; font-size:0.85rem; margin-top:10px; min-height:1.2em;}
+
+/* ---------- Área principal (depois do login) ---------- */
+#area-admin{display:none;}
+.botao-sair{
+  position:absolute; right:20px; top:26px; background:none; border:none; color:var(--ink-soft);
+  font-size:0.8rem; text-decoration:underline;
+}
 
 .abas{display:flex; gap:6px; margin-bottom:18px; overflow-x:auto;}
 .abas button{
@@ -37,6 +65,7 @@ input[type=text], input[type=password], input[type=date], select, textarea{
   font-family:inherit; font-size:0.95rem; background:#fff;
 }
 textarea{resize:vertical; min-height:64px;}
+textarea.grande{min-height:180px;}
 input[type=file]{margin-top:4px;}
 .linha-dupla{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
 .botao{
@@ -60,12 +89,28 @@ input[type=file]{margin-top:4px;}
 .item-linha button{background:none; border:none; color:#B4453A; font-size:0.8rem; font-weight:700; flex-shrink:0;}
 a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:0.85rem; text-decoration:none;}
 .aviso-vazio{color:#8A6F60; font-size:0.88rem;}
+.dica{font-size:0.78rem; color:var(--ink-soft); margin-top:4px;}
 </style>
 </head>
 <body>
+
+<!-- =================== LOGIN =================== -->
+<div id="tela-login">
+  <div class="login-cartao">
+    <h2>Área administrativa</h2>
+    <p>Digite a senha para editar o conteúdo do site.</p>
+    <input type="password" id="campo-senha-login" placeholder="Senha" autofocus>
+    <button id="botao-entrar-login">Entrar</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<!-- =================== ÁREA ADMINISTRATIVA =================== -->
+<div id="area-admin">
 <header>
   <h1>Área administrativa</h1>
-  <p>Só para vocês dois — adicione ou remova conteúdo do site.</p>
+  <p>Só para vocês dois — adicione ou edite o conteúdo do site.</p>
+  <button class="botao-sair" id="botao-sair">sair</button>
 </header>
 <main>
 
@@ -73,6 +118,10 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
     <button data-aba="fotos" class="ativa">📸 Álbum</button>
     <button data-aba="momentos">🕰️ Linha do tempo</button>
     <button data-aba="eventos">📅 Calendário</button>
+    <button data-aba="carta">💌 Carta</button>
+    <button data-aba="coisas">💗 Sobre vocês</button>
+    <button data-aba="planos">🎯 Planos</button>
+    <button data-aba="config">⚙️ Configurações</button>
   </div>
 
   <!-- =================== ÁLBUM =================== -->
@@ -80,8 +129,6 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
     <div class="cartao">
       <h2>Adicionar uma foto</h2>
       <form class="form-item" data-colecao="fotos">
-        <label>Senha</label>
-        <input type="password" name="senha" required>
         <label>Foto</label>
         <input type="file" name="foto" accept="image/*" required>
         <label>Título</label>
@@ -100,9 +147,7 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
     </div>
     <div class="cartao">
       <h2>Fotos salvas</h2>
-      <label>Senha (para remover)</label>
-      <input type="password" class="senha-lista" placeholder="digite para habilitar remoção">
-      <div class="lista-itens" style="margin-top:14px;" data-lista="fotos"></div>
+      <div class="lista-itens" data-lista="fotos"></div>
     </div>
   </div>
 
@@ -111,8 +156,6 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
     <div class="cartao">
       <h2>Adicionar um momento à linha do tempo</h2>
       <form class="form-item" data-colecao="momentos">
-        <label>Senha</label>
-        <input type="password" name="senha" required>
         <label>Título</label>
         <input type="text" name="titulo" placeholder="Ex: Nossa primeira viagem" required>
         <div class="linha-dupla">
@@ -129,9 +172,7 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
     </div>
     <div class="cartao">
       <h2>Momentos salvos</h2>
-      <label>Senha (para remover)</label>
-      <input type="password" class="senha-lista" placeholder="digite para habilitar remoção">
-      <div class="lista-itens" style="margin-top:14px;" data-lista="momentos"></div>
+      <div class="lista-itens" data-lista="momentos"></div>
     </div>
   </div>
 
@@ -140,8 +181,6 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
     <div class="cartao">
       <h2>Adicionar um evento ao calendário</h2>
       <form class="form-item" data-colecao="eventos">
-        <label>Senha</label>
-        <input type="password" name="senha" required>
         <label>Título</label>
         <input type="text" name="titulo" placeholder="Ex: Noite de filme" required>
         <div class="linha-dupla">
@@ -166,104 +205,320 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
     </div>
     <div class="cartao">
       <h2>Eventos salvos</h2>
-      <label>Senha (para remover)</label>
-      <input type="password" class="senha-lista" placeholder="digite para habilitar remoção">
-      <div class="lista-itens" style="margin-top:14px;" data-lista="eventos"></div>
+      <div class="lista-itens" data-lista="eventos"></div>
+    </div>
+  </div>
+
+  <!-- =================== CARTA =================== -->
+  <div class="painel" id="painel-carta">
+    <div class="cartao">
+      <h2>Carta de amor</h2>
+      <p class="dica">Separe os parágrafos com uma linha em branco entre eles.</p>
+      <form id="form-carta">
+        <label>Texto da carta</label>
+        <textarea name="texto" class="grande" id="carta-texto-campo" placeholder="Meu amor,&#10;&#10;..."></textarea>
+        <label>Assinatura</label>
+        <input type="text" name="assinatura" id="carta-assinatura-campo" placeholder="Ex: com todo o meu amor">
+        <button type="submit" class="botao">Salvar carta</button>
+        <div class="mensagem"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================== SOBRE VOCÊS =================== -->
+  <div class="painel" id="painel-coisas">
+    <div class="cartao">
+      <h2>Adicionar um cartão</h2>
+      <form class="form-item" data-colecao="coisas">
+        <label>Emoji</label>
+        <input type="text" name="emoji" placeholder="💗" value="💗">
+        <label>Frente do cartão</label>
+        <input type="text" name="frente" placeholder="Ex: Seu sorriso" required>
+        <label>Verso do cartão (a mensagem)</label>
+        <textarea name="verso" placeholder="Ex: Ele consegue mudar completamente o meu dia."></textarea>
+        <button type="submit" class="botao">Salvar cartão</button>
+        <div class="mensagem"></div>
+      </form>
+    </div>
+    <div class="cartao">
+      <h2>Cartões salvos</h2>
+      <div class="lista-itens" data-lista="coisas"></div>
+    </div>
+  </div>
+
+  <!-- =================== PLANOS =================== -->
+  <div class="painel" id="painel-planos">
+    <div class="cartao">
+      <h2>Adicionar um plano</h2>
+      <form class="form-item" data-colecao="planos">
+        <label>Título</label>
+        <input type="text" name="titulo" placeholder="Ex: Viajar para a praia" required>
+        <label>Descrição</label>
+        <textarea name="texto" placeholder="Detalhes do plano"></textarea>
+        <label>Status</label>
+        <select name="status">
+          <option value="queremos">💭 Queremos fazer</option>
+          <option value="marcado">📅 Marcado</option>
+          <option value="feito">❤️ Já fizemos</option>
+        </select>
+        <button type="submit" class="botao">Salvar plano</button>
+        <div class="mensagem"></div>
+      </form>
+    </div>
+    <div class="cartao">
+      <h2>Planos salvos</h2>
+      <div class="lista-itens" data-lista="planos"></div>
+    </div>
+  </div>
+
+  <!-- =================== CONFIGURAÇÕES =================== -->
+  <div class="painel" id="painel-config">
+    <div class="cartao">
+      <h2>Nomes e datas</h2>
+      <form id="form-config">
+        <label>Nome dela</label>
+        <input type="text" name="nomeDela" id="config-nomeDela">
+        <label>Seu nome</label>
+        <input type="text" name="meuNome" id="config-meuNome">
+        <div class="linha-dupla">
+          <div><label>Início do relacionamento</label><input type="date" name="inicioRelacionamento" id="config-inicio"></div>
+          <div><label>Data comemorativa</label><input type="date" name="dataComemorativa" id="config-comemorativa"></div>
+        </div>
+        <button type="submit" class="botao">Salvar configurações</button>
+        <div class="mensagem"></div>
+      </form>
     </div>
   </div>
 
   <a class="voltar" href="/">← voltar para o site</a>
 </main>
+</div>
 
 <script>
-document.querySelectorAll('.abas button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.abas button').forEach(b => b.classList.remove('ativa'));
-    document.querySelectorAll('.painel').forEach(p => p.classList.remove('ativo'));
-    btn.classList.add('ativa');
-    document.getElementById('painel-' + btn.dataset.aba).classList.add('ativo');
-  });
-});
+let SENHA_ADMIN = null;
 
-const APRESENTACAO = {
-  fotos: (m) => ({ titulo: m.titulo, subtitulo: `${m.data || ''}${m.local ? ' · ' + m.local : ''}`, emoji: m.emoji || '📷' }),
-  momentos: (m) => ({ titulo: m.titulo, subtitulo: m.data || '', emoji: m.emoji || '❤️' }),
-  eventos: (m) => ({ titulo: m.titulo, subtitulo: m.dataISO || '', emoji: m.emoji || '❤️' }),
-};
-
-async function carregarLista(colecao){
-  const container = document.querySelector(`[data-lista="${colecao}"]`);
-  const resposta = await fetch(`/api/dados?colecao=${colecao}`, { cache: 'no-store' });
-  const itens = await resposta.json();
-
-  if(!Array.isArray(itens) || itens.length === 0){
-    container.innerHTML = '<p class="aviso-vazio">Nada salvo ainda nesta seção.</p>';
-    return;
-  }
-
-  const apresentar = APRESENTACAO[colecao];
-  container.innerHTML = itens.map(item => {
-    const { titulo, subtitulo, emoji } = apresentar(item);
-    const miniatura = item.img
-      ? `<img src="${item.img}" alt="${titulo}">`
-      : `<div class="emoji-fallback">${emoji}</div>`;
-    return `
-      <div class="item-linha">
-        ${miniatura}
-        <div class="info"><strong>${titulo}</strong><span>${subtitulo}</span></div>
-        <button data-id="${item.id}" data-colecao="${colecao}">remover</button>
-      </div>`;
-  }).join('');
-
-  container.querySelectorAll('button[data-id]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const painel = btn.closest('.painel');
-      const senha = painel.querySelector('.senha-lista').value;
-      if(!senha){ alert('Digite a senha para poder remover.'); return; }
-      if(!confirm('Remover este item? Essa ação não pode ser desfeita.')) return;
-      const resp = await fetch(`/api/dados?colecao=${btn.dataset.colecao}&id=${btn.dataset.id}&senha=${encodeURIComponent(senha)}`, { method: 'DELETE' });
-      const dados = await resp.json();
-      if(!resp.ok){ alert(dados.erro || 'Não foi possível remover.'); return; }
-      carregarLista(colecao);
-    });
-  });
+/* ---------------------------------------------------------------------
+   Login
+--------------------------------------------------------------------- */
+async function verificarSenha(senha){
+  try {
+    const resp = await fetch(`/api/login?senha=${encodeURIComponent(senha)}`, {cache:'no-store'});
+    const dados = await resp.json();
+    return Boolean(dados.ok);
+  } catch (erro) { return false; }
 }
 
-['fotos','momentos','eventos'].forEach(carregarLista);
+async function tentarEntrar(senha){
+  const erro = document.getElementById('login-erro');
+  erro.textContent = '';
+  const ok = await verificarSenha(senha);
+  if(ok){
+    SENHA_ADMIN = senha;
+    sessionStorage.setItem('nossaHistoriaSenhaAdmin', senha);
+    document.getElementById('tela-login').style.display = 'none';
+    document.getElementById('area-admin').style.display = 'block';
+    iniciarAreaAdmin();
+  } else {
+    erro.textContent = 'Senha incorreta.';
+  }
+}
 
-document.querySelectorAll('.form-item').forEach(form => {
-  form.addEventListener('submit', async (e) => {
+document.getElementById('botao-entrar-login').addEventListener('click', () => {
+  tentarEntrar(document.getElementById('campo-senha-login').value);
+});
+document.getElementById('campo-senha-login').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') tentarEntrar(e.target.value);
+});
+document.getElementById('botao-sair').addEventListener('click', () => {
+  sessionStorage.removeItem('nossaHistoriaSenhaAdmin');
+  SENHA_ADMIN = null;
+  document.getElementById('area-admin').style.display = 'none';
+  document.getElementById('tela-login').style.display = 'flex';
+  document.getElementById('campo-senha-login').value = '';
+});
+
+// Se já tiver uma senha guardada nesta aba (sessionStorage), tenta entrar sozinho
+(async function tentarLoginAutomatico(){
+  const guardada = sessionStorage.getItem('nossaHistoriaSenhaAdmin');
+  if(guardada){
+    const ok = await verificarSenha(guardada);
+    if(ok){
+      SENHA_ADMIN = guardada;
+      document.getElementById('tela-login').style.display = 'none';
+      document.getElementById('area-admin').style.display = 'block';
+      iniciarAreaAdmin();
+      return;
+    }
+    sessionStorage.removeItem('nossaHistoriaSenhaAdmin');
+  }
+})();
+
+/* ---------------------------------------------------------------------
+   Área administrativa (só roda depois do login)
+--------------------------------------------------------------------- */
+let iniciado = false;
+function iniciarAreaAdmin(){
+  if(iniciado) return; // evita registrar tudo duas vezes
+  iniciado = true;
+
+  document.querySelectorAll('.abas button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.abas button').forEach(b => b.classList.remove('ativa'));
+      document.querySelectorAll('.painel').forEach(p => p.classList.remove('ativo'));
+      btn.classList.add('ativa');
+      document.getElementById('painel-' + btn.dataset.aba).classList.add('ativo');
+    });
+  });
+
+  const APRESENTACAO = {
+    fotos: (m) => ({ titulo: m.titulo, subtitulo: `${m.data || ''}${m.local ? ' · ' + m.local : ''}`, emoji: m.emoji || '📷' }),
+    momentos: (m) => ({ titulo: m.titulo, subtitulo: m.data || '', emoji: m.emoji || '❤️' }),
+    eventos: (m) => ({ titulo: m.titulo, subtitulo: m.dataISO || '', emoji: m.emoji || '❤️' }),
+    coisas: (m) => ({ titulo: m.frente, subtitulo: m.verso || '', emoji: m.emoji || '💗' }),
+    planos: (m) => ({ titulo: m.titulo, subtitulo: m.status || '', emoji: '🎯' }),
+  };
+
+  async function carregarLista(colecao){
+    const container = document.querySelector(`[data-lista="${colecao}"]`);
+    if(!container) return;
+    const resposta = await fetch(`/api/dados?colecao=${colecao}`, { cache: 'no-store' });
+    const itens = await resposta.json();
+
+    if(!Array.isArray(itens) || itens.length === 0){
+      container.innerHTML = '<p class="aviso-vazio">Nada salvo ainda nesta seção.</p>';
+      return;
+    }
+
+    const apresentar = APRESENTACAO[colecao];
+    container.innerHTML = itens.map(item => {
+      const { titulo, subtitulo, emoji } = apresentar(item);
+      const miniatura = item.img
+        ? `<img src="${item.img}" alt="${titulo}">`
+        : `<div class="emoji-fallback">${emoji}</div>`;
+      return `
+        <div class="item-linha">
+          ${miniatura}
+          <div class="info"><strong>${titulo}</strong><span>${subtitulo}</span></div>
+          <button data-id="${item.id}" data-colecao="${colecao}">remover</button>
+        </div>`;
+    }).join('');
+
+    container.querySelectorAll('button[data-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if(!confirm('Remover este item? Essa ação não pode ser desfeita.')) return;
+        const resp = await fetch(`/api/dados?colecao=${btn.dataset.colecao}&id=${btn.dataset.id}&senha=${encodeURIComponent(SENHA_ADMIN)}`, { method: 'DELETE' });
+        const dados = await resp.json();
+        if(!resp.ok){ alert(dados.erro || 'Não foi possível remover.'); return; }
+        carregarLista(colecao);
+      });
+    });
+  }
+
+  ['fotos','momentos','eventos','coisas','planos'].forEach(carregarLista);
+
+  document.querySelectorAll('.form-item').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const colecao = form.dataset.colecao;
+      const botao = form.querySelector('.botao');
+      const mensagem = form.querySelector('.mensagem');
+      botao.disabled = true;
+      mensagem.textContent = 'Enviando...';
+      mensagem.className = 'mensagem';
+
+      const formData = new FormData(form);
+      formData.set('colecao', colecao);
+      formData.set('senha', SENHA_ADMIN);
+
+      try {
+        const resposta = await fetch('/api/dados', { method: 'POST', body: formData });
+        const dados = await resposta.json();
+        if(!resposta.ok){
+          mensagem.textContent = dados.erro || 'Não foi possível salvar.';
+          mensagem.className = 'mensagem erro';
+        } else {
+          mensagem.textContent = 'Salvo com sucesso! ❤️';
+          mensagem.className = 'mensagem sucesso';
+          form.reset();
+          carregarLista(colecao);
+        }
+      } catch (erro) {
+        mensagem.textContent = 'Erro de conexão. Tente novamente.';
+        mensagem.className = 'mensagem erro';
+      } finally {
+        botao.disabled = false;
+      }
+    });
+  });
+
+  /* --------- Carta (coleção única) --------- */
+  fetch('/api/dados?colecao=carta', {cache:'no-store'})
+    .then(r => r.json())
+    .then(dados => {
+      if(dados){
+        document.getElementById('carta-texto-campo').value = dados.texto || '';
+        document.getElementById('carta-assinatura-campo').value = dados.assinatura || '';
+      }
+    });
+  document.getElementById('form-carta').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const colecao = form.dataset.colecao;
-    const botao = form.querySelector('.botao');
+    const form = e.target;
     const mensagem = form.querySelector('.mensagem');
+    const botao = form.querySelector('.botao');
     botao.disabled = true;
-    mensagem.textContent = 'Enviando...';
+    mensagem.textContent = 'Salvando...';
     mensagem.className = 'mensagem';
-
     const formData = new FormData(form);
-    formData.set('colecao', colecao);
-
+    formData.set('colecao', 'carta');
+    formData.set('senha', SENHA_ADMIN);
     try {
       const resposta = await fetch('/api/dados', { method: 'POST', body: formData });
       const dados = await resposta.json();
-      if(!resposta.ok){
-        mensagem.textContent = dados.erro || 'Não foi possível salvar.';
-        mensagem.className = 'mensagem erro';
-      } else {
-        mensagem.textContent = 'Salvo com sucesso! ❤️';
-        mensagem.className = 'mensagem sucesso';
-        form.reset();
-        carregarLista(colecao);
-      }
+      mensagem.textContent = resposta.ok ? 'Carta salva! ❤️' : (dados.erro || 'Não foi possível salvar.');
+      mensagem.className = resposta.ok ? 'mensagem sucesso' : 'mensagem erro';
     } catch (erro) {
-      mensagem.textContent = 'Erro de conexão. Tente novamente.';
+      mensagem.textContent = 'Erro de conexão.';
       mensagem.className = 'mensagem erro';
     } finally {
       botao.disabled = false;
     }
   });
-});
+
+  /* --------- Configurações (coleção única) --------- */
+  fetch('/api/dados?colecao=config', {cache:'no-store'})
+    .then(r => r.json())
+    .then(dados => {
+      if(dados){
+        document.getElementById('config-nomeDela').value = dados.nomeDela || '';
+        document.getElementById('config-meuNome').value = dados.meuNome || '';
+        if(dados.inicioRelacionamento) document.getElementById('config-inicio').value = dados.inicioRelacionamento.slice(0,10);
+        if(dados.dataComemorativa) document.getElementById('config-comemorativa').value = dados.dataComemorativa.slice(0,10);
+      }
+    });
+  document.getElementById('form-config').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const mensagem = form.querySelector('.mensagem');
+    const botao = form.querySelector('.botao');
+    botao.disabled = true;
+    mensagem.textContent = 'Salvando...';
+    mensagem.className = 'mensagem';
+    const formData = new FormData(form);
+    formData.set('colecao', 'config');
+    formData.set('senha', SENHA_ADMIN);
+    try {
+      const resposta = await fetch('/api/dados', { method: 'POST', body: formData });
+      const dados = await resposta.json();
+      mensagem.textContent = resposta.ok ? 'Configurações salvas! ❤️' : (dados.erro || 'Não foi possível salvar.');
+      mensagem.className = resposta.ok ? 'mensagem sucesso' : 'mensagem erro';
+    } catch (erro) {
+      mensagem.textContent = 'Erro de conexão.';
+      mensagem.className = 'mensagem erro';
+    } finally {
+      botao.disabled = false;
+    }
+  });
+}
 </script>
 </body>
 </html>

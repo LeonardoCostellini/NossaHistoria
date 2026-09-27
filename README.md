@@ -25,6 +25,23 @@ aba — os formulários não pedem mais senha individualmente.
 (adiciona quantos itens quiser, remove um por um). Carta e Configurações
 são um **valor único** — salvar substitui o que já existia.
 
+## O conteúdo padrão agora é editável de verdade
+
+Antes, os itens que já vinham prontos (a linha do tempo, o calendário, a
+carta, etc.) só existiam como texto fixo no código — aaparecia no site, mas
+não dava para editar ou apagar pelo `/admin`. Agora esse conteúdo padrão
+mora dentro da própria API (`api/dados.js`): na primeira vez que você abrir
+cada aba do admin, os itens padrão já aparecem lá, prontos para editar ou
+remover. Assim que você salvar qualquer alteração naquela seção, o padrão
+"vira" o seu conteúdo de verdade a partir dali.
+
+## Dudu e Bubu por toda parte
+
+Além da linha do tempo, agora o Dudu e a Bubu aparecem intercalados também
+no álbum, no calendário, nos cartões de "sobre vocês" e nos planos — cada
+item alterna entre os dois. Tocar no selinho toca o mesmo som de "boop" dos
+outros lugares.
+
 ## O que ainda é só código
 
 Os caminhos dos arquivos de imagem e áudio (ilustração do casal, do Dudu, da

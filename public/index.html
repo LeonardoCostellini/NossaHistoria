@@ -283,6 +283,17 @@ section{padding:80px 0; position:relative;}
 .timeline-personagem{position:absolute; right:-6px; bottom:-18px; width:46px; opacity:0.95; cursor:pointer; transition:transform .2s ease;}
 .timeline-personagem:hover{transform:scale(1.15);}
 .timeline-personagem img{width:46px; height:46px; object-fit:cover; border-radius:50%; border:2px solid var(--paper); box-shadow:0 3px 8px rgba(74,50,38,0.25); display:block;}
+
+/* Selinho pequeno do Dudu/Bubu, reaproveitado em várias seções */
+.mascote-mini{
+  position:absolute; width:30px; height:30px; z-index:3; cursor:pointer;
+  transition:transform .2s ease;
+}
+.mascote-mini:hover{transform:scale(1.18);}
+.mascote-mini img{
+  width:100%; height:100%; object-fit:cover; border-radius:50%;
+  border:2px solid var(--paper); box-shadow:0 3px 7px rgba(74,50,38,0.25); display:block;
+}
 .timeline-foto{margin-top:12px; border-radius:8px; overflow:hidden; max-width:220px;}
 .timeline-foto img{width:100%; display:block;}
 
@@ -357,7 +368,7 @@ section{padding:80px 0; position:relative;}
   display:flex; gap:16px; align-items:flex-start;
   background:var(--paper); border-radius:14px; padding:16px 18px;
   box-shadow:var(--shadow-soft); border-left:4px solid var(--rose-deep);
-  transition:transform .2s ease;
+  transition:transform .2s ease; position:relative;
 }
 .evento-card:hover{transform:translateX(4px);}
 .evento-card{cursor:pointer;}
@@ -427,7 +438,7 @@ section{padding:80px 0; position:relative;}
 .cartas-grade{
   display:grid; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:18px;
 }
-.flip-card{height:170px; perspective:1000px;}
+.flip-card{height:170px; perspective:1000px; position:relative;}
 .flip-card-inner{
   position:relative; width:100%; height:100%; transition:transform .6s;
   transform-style:preserve-3d;
@@ -452,7 +463,7 @@ section{padding:80px 0; position:relative;}
 }
 .plano-card{
   background:var(--paper); border-radius:12px; padding:14px 16px; margin-bottom:12px;
-  box-shadow:var(--shadow-soft);
+  box-shadow:var(--shadow-soft); position:relative;
 }
 .plano-titulo{font-weight:700; color:var(--cocoa-deep); font-size:0.95rem; margin:0 0 4px;}
 .plano-texto{margin:0; color:var(--ink-soft); font-size:0.86rem; line-height:1.45;}
@@ -717,8 +728,8 @@ const ATIVOS = {
 // que a busca à API responder (função atualizarConfig, mais abaixo).
 let CONFIG = {
   ...ATIVOS,
-  nomeDela: "[NOME DELA]",
-  meuNome: "[MEU NOME]",
+  nomeDela: "Roberta Hikaru Miyazaki",
+  meuNome: "Leonardo Barreiro Costellini",
   inicioRelacionamento: "2024-10-07T00:00:00",
   dataComemorativa: "2026-10-07T00:00:00",
 };
@@ -959,6 +970,20 @@ function tocarSom(fn){
   try { fn(); } catch(erro){ /* navegador sem suporte a Web Audio — segue em silêncio */ }
 }
 
+// Gera um selinho pequeno com o Dudu ou a Bubu, alternando pelo índice —
+// usado no álbum, calendário, cartões e planos, para os dois estarem
+// presentes organicamente por toda a experiência (item 13 do pedido original).
+function mascoteMini(indice, estiloPosicao){
+  const usarDudu = indice % 2 === 0;
+  const src = usarDudu ? CONFIG.personagemDuduImg : CONFIG.personagemBubuImg;
+  const alt = usarDudu ? 'Dudu' : 'Bubu';
+  return `<div class="mascote-mini" style="${estiloPosicao || 'top:-8px; right:-8px;'}" title="${alt}"><img src="${src}" alt="${alt}"></div>`;
+}
+document.addEventListener('click', (e) => {
+  const alvo = e.target.closest('.mascote-mini');
+  if(alvo){ e.stopPropagation(); tocarSom(Sons.clique); }
+}, true);
+
 // Tocar no casal da tela inicial faz eles "responderem" com um boopzinho
 document.getElementById('duo-capa').addEventListener('click', (e) => {
   e.stopPropagation();
@@ -1104,6 +1129,7 @@ function renderAlbum(){
   document.getElementById('album-grade').innerHTML = FOTOS_ALBUM.map((f,i) => `
     <div class="polaroid reveal visivel" data-indice="${i}">
       <div class="polaroid-adesivo">${adesivos[i % adesivos.length]}</div>
+      ${mascoteMini(i, 'bottom:-8px; left:-8px;')}
       <div class="polaroid-foto" data-emoji="${f.emoji || '📷'}">${f.img ? `<img src="${f.img}" onerror="this.parentElement.innerHTML=this.parentElement.dataset.emoji">` : (f.emoji || '📷')}</div>
       <div class="polaroid-legenda">${f.titulo}</div>
     </div>
@@ -1157,12 +1183,13 @@ let EVENTOS_CALENDARIO = EVENTOS_CALENDARIO_PADRAO;
 
 function renderCalendario(){
   const ordenados = EVENTOS_CALENDARIO.slice().sort((a,b) => (a.dataISO||'').localeCompare(b.dataISO||''));
-  document.getElementById('calendario-lista').innerHTML = ordenados.map(e => {
+  document.getElementById('calendario-lista').innerHTML = ordenados.map((e,i) => {
     const d = e.dataISO ? new Date(e.dataISO + 'T00:00:00') : null;
     const dia = d ? String(d.getDate()).padStart(2,'0') : (e.dia || '--');
     const mes = d ? MESES_ABREV[d.getMonth()] : (e.mes || '');
     return `
     <div class="evento-card reveal visivel" data-id="${e.id || ''}">
+      ${mascoteMini(i, 'top:-8px; right:-8px;')}
       <div class="evento-data-bloco">
         <div class="evento-dia">${dia}</div>
         <div class="evento-mes">${mes}</div>
@@ -1221,6 +1248,7 @@ let COISAS_QUE_AMO = COISAS_QUE_AMO_PADRAO;
 function renderCoisas(){
   document.getElementById('cartas-grade').innerHTML = COISAS_QUE_AMO.map((c,i) => `
     <div class="flip-card reveal visivel" data-i="${i}">
+      ${mascoteMini(i, 'top:-8px; right:-8px;')}
       <div class="flip-card-inner">
         <div class="flip-face flip-frente"><span>${c.emoji}</span>${c.frente}</div>
         <div class="flip-face flip-verso">${c.verso}</div>
@@ -1247,11 +1275,13 @@ function renderPlanos(){
     itens: PLANOS_FUTUROS.filter(p => (p.status || 'queremos') === status),
   })).filter(g => g.itens.length > 0);
 
+  let indiceGlobal = 0;
   document.getElementById('planos-colunas').innerHTML = grupos.map(g => `
     <div class="reveal visivel">
       <p class="planos-coluna-titulo">${g.label}</p>
       ${g.itens.map(p => `
         <div class="plano-card">
+          ${mascoteMini(indiceGlobal++, 'top:-8px; right:-8px;')}
           <p class="plano-titulo">${p.titulo}</p>
           <p class="plano-texto">${p.texto}</p>
         </div>

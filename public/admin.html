@@ -90,6 +90,21 @@ input[type=file]{margin-top:4px;}
 a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:0.85rem; text-decoration:none;}
 .aviso-vazio{color:#8A6F60; font-size:0.88rem;}
 .dica{font-size:0.78rem; color:var(--ink-soft); margin-top:4px;}
+.cabecalho-lista{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+.cabecalho-lista h2{margin:0;}
+.apagar-tudo{background:none; border:none; color:#B4453A; font-size:0.8rem; font-weight:700; text-decoration:underline;}
+.item-linha .acoes{display:flex; gap:12px; flex-shrink:0;}
+.item-linha button.editar{color:var(--rose-deep);}
+.aviso-edicao{background:var(--blush); color:var(--rose-deep); font-weight:700; border-radius:10px; padding:10px 12px; margin-bottom:6px; font-size:0.88rem;}
+.botao-secundario{background:transparent !important; color:var(--rose-deep) !important; border:1px solid var(--rose-deep) !important; margin-left:8px;}
+.fotos-atuais{margin-top:6px;}
+.fotos-atuais-grade{display:flex; flex-wrap:wrap; gap:10px; margin-top:4px;}
+.foto-atual{position:relative; width:72px; height:72px;}
+.foto-atual img{width:100%; height:100%; object-fit:cover; border-radius:8px; display:block;}
+.foto-atual button{
+  position:absolute; top:-7px; right:-7px; width:22px; height:22px; border-radius:50%; border:none;
+  background:#B4453A; color:#fff; font-size:0.7rem; font-weight:700; line-height:1; padding:0;
+}
 </style>
 </head>
 <body>
@@ -155,7 +170,10 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
       </form>
     </div>
     <div class="cartao">
-      <h2>Fotos salvas</h2>
+      <div class="cabecalho-lista">
+        <h2>Fotos salvas</h2>
+        <button type="button" class="apagar-tudo" data-colecao="fotos">apagar tudo</button>
+      </div>
       <div class="lista-itens" data-lista="fotos"></div>
     </div>
   </div>
@@ -181,7 +199,10 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
       </form>
     </div>
     <div class="cartao">
-      <h2>Momentos salvos</h2>
+      <div class="cabecalho-lista">
+        <h2>Momentos salvos</h2>
+        <button type="button" class="apagar-tudo" data-colecao="momentos">apagar tudo</button>
+      </div>
       <div class="lista-itens" data-lista="momentos"></div>
     </div>
   </div>
@@ -214,7 +235,10 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
       </form>
     </div>
     <div class="cartao">
-      <h2>Eventos salvos</h2>
+      <div class="cabecalho-lista">
+        <h2>Eventos salvos</h2>
+        <button type="button" class="apagar-tudo" data-colecao="eventos">apagar tudo</button>
+      </div>
       <div class="lista-itens" data-lista="eventos"></div>
     </div>
   </div>
@@ -251,7 +275,10 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
       </form>
     </div>
     <div class="cartao">
-      <h2>Cartões salvos</h2>
+      <div class="cabecalho-lista">
+        <h2>Cartões salvos</h2>
+        <button type="button" class="apagar-tudo" data-colecao="coisas">apagar tudo</button>
+      </div>
       <div class="lista-itens" data-lista="coisas"></div>
     </div>
   </div>
@@ -276,7 +303,10 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
       </form>
     </div>
     <div class="cartao">
-      <h2>Planos salvos</h2>
+      <div class="cabecalho-lista">
+        <h2>Planos salvos</h2>
+        <button type="button" class="apagar-tudo" data-colecao="planos">apagar tudo</button>
+      </div>
       <div class="lista-itens" data-lista="planos"></div>
     </div>
   </div>
@@ -379,8 +409,11 @@ function iniciarAreaAdmin(){
     });
   });
 
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fotosDoItem = (m) => Array.isArray(m.imgs) && m.imgs.length ? m.imgs.slice() : (m.img ? [m.img] : []);
+
   function textoQtdFotos(m){
-    const n = Array.isArray(m.imgs) ? m.imgs.length : 0;
+    const n = fotosDoItem(m).length;
     return n > 1 ? ` · 📷 ${n} fotos` : '';
   }
 
@@ -392,43 +425,184 @@ function iniciarAreaAdmin(){
     planos: (m) => ({ titulo: m.titulo, subtitulo: m.status || '', emoji: '🎯' }),
   };
 
-  async function carregarLista(colecao){
+  const ITENS = {};   // última lista conhecida de cada aba (usada pelo botão "editar")
+  const EDICAO = {};  // aba -> { id, fotos: [links que ficam] } enquanto um item está sendo editado
+
+  const formDaAba = (colecao) => document.querySelector(`form.form-item[data-colecao="${colecao}"]`);
+
+  function renderizarLista(colecao, itens){
+    ITENS[colecao] = Array.isArray(itens) ? itens : [];
     const container = document.querySelector(`[data-lista="${colecao}"]`);
     if(!container) return;
-    const resposta = await fetch(`/api/dados?colecao=${colecao}`, { cache: 'no-store' });
-    const itens = await resposta.json();
+    const botaoTudo = document.querySelector(`.apagar-tudo[data-colecao="${colecao}"]`);
+    if(botaoTudo) botaoTudo.style.display = ITENS[colecao].length ? '' : 'none';
 
-    if(!Array.isArray(itens) || itens.length === 0){
-      container.innerHTML = '<p class="aviso-vazio">Nada salvo ainda nesta seção.</p>';
+    if(ITENS[colecao].length === 0){
+      container.innerHTML = '<p class="aviso-vazio">Nada salvo nesta aba — ela está livre para você escrever. ✍️</p>';
       return;
     }
 
     const apresentar = APRESENTACAO[colecao];
-    container.innerHTML = itens.map(item => {
+    container.innerHTML = ITENS[colecao].map(item => {
       const { titulo, subtitulo, emoji } = apresentar(item);
       const miniatura = item.img
-        ? `<img src="${item.img}" alt="${titulo}">`
-        : `<div class="emoji-fallback">${emoji}</div>`;
+        ? `<img src="${esc(item.img)}" alt="">`
+        : `<div class="emoji-fallback">${esc(emoji)}</div>`;
       return `
         <div class="item-linha">
           ${miniatura}
-          <div class="info"><strong>${titulo}</strong><span>${subtitulo}</span></div>
-          <button data-id="${item.id}" data-colecao="${colecao}">remover</button>
+          <div class="info"><strong>${esc(titulo)}</strong><span>${esc(subtitulo)}</span></div>
+          <div class="acoes">
+            <button type="button" class="editar" data-acao="editar" data-id="${esc(item.id)}">editar</button>
+            <button type="button" data-acao="remover" data-id="${esc(item.id)}">remover</button>
+          </div>
         </div>`;
     }).join('');
 
-    container.querySelectorAll('button[data-id]').forEach(btn => {
+    container.querySelectorAll('button[data-acao="editar"]').forEach(btn => {
+      btn.addEventListener('click', () => entrarEmEdicao(colecao, btn.dataset.id));
+    });
+    container.querySelectorAll('button[data-acao="remover"]').forEach(btn => {
       btn.addEventListener('click', async () => {
         if(!confirm('Remover este item? Essa ação não pode ser desfeita.')) return;
-        const resp = await fetch(`/api/dados?colecao=${btn.dataset.colecao}&id=${btn.dataset.id}&senha=${encodeURIComponent(SENHA_ADMIN)}`, { method: 'DELETE' });
-        const dados = await resp.json();
-        if(!resp.ok){ alert(dados.erro || 'Não foi possível remover.'); return; }
-        carregarLista(colecao);
+        btn.disabled = true;
+        try {
+          const resp = await fetch(`/api/dados?colecao=${colecao}&id=${encodeURIComponent(btn.dataset.id)}&senha=${encodeURIComponent(SENHA_ADMIN)}`, { method: 'DELETE' });
+          const dados = await resp.json();
+          if(!resp.ok){ alert(dados.erro || 'Não foi possível remover.'); btn.disabled = false; return; }
+          if(EDICAO[colecao] && EDICAO[colecao].id === btn.dataset.id) sairDaEdicao(colecao);
+          Array.isArray(dados.lista) ? renderizarLista(colecao, dados.lista) : carregarLista(colecao);
+        } catch (erro) {
+          alert('Erro de conexão. Tente novamente.');
+          btn.disabled = false;
+        }
       });
     });
   }
 
+  async function carregarLista(colecao){
+    const container = document.querySelector(`[data-lista="${colecao}"]`);
+    if(!container) return;
+    try {
+      const resposta = await fetch(`/api/dados?colecao=${colecao}`, { cache: 'no-store' });
+      if(!resposta.ok) throw new Error('HTTP ' + resposta.status);
+      renderizarLista(colecao, await resposta.json());
+    } catch (erro) {
+      container.innerHTML = '<p class="aviso-vazio">Não consegui carregar esta aba agora. Recarregue a página para tentar de novo.</p>';
+    }
+  }
+
   ['fotos','momentos','eventos','coisas','planos'].forEach(carregarLista);
+
+  // "Apagar tudo": deixa a aba vazia (livre) para você escrever do zero
+  document.querySelectorAll('.apagar-tudo').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const colecao = btn.dataset.colecao;
+      if(!confirm('Apagar TUDO desta aba (incluindo as fotos)? Essa ação não pode ser desfeita.')) return;
+      btn.disabled = true;
+      try {
+        const resp = await fetch(`/api/dados?colecao=${colecao}&tudo=1&senha=${encodeURIComponent(SENHA_ADMIN)}`, { method: 'DELETE' });
+        const dados = await resp.json();
+        if(!resp.ok){ alert(dados.erro || 'Não foi possível apagar.'); return; }
+        if(EDICAO[colecao]) sairDaEdicao(colecao);
+        renderizarLista(colecao, dados.lista || []);
+      } catch (erro) {
+        alert('Erro de conexão. Tente novamente.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+
+  /* --------- Modo de edição (usa o mesmo formulário de "adicionar") --------- */
+  // Prepara, em cada formulário, os elementos extras: aviso, botão cancelar e painel das fotos atuais
+  document.querySelectorAll('form.form-item').forEach(form => {
+    const aviso = document.createElement('div');
+    aviso.className = 'aviso-edicao';
+    aviso.style.display = 'none';
+    form.prepend(aviso);
+
+    const salvar = form.querySelector('.botao');
+    salvar.dataset.textoOriginal = salvar.textContent;
+    const cancelar = document.createElement('button');
+    cancelar.type = 'button';
+    cancelar.className = 'botao botao-secundario';
+    cancelar.textContent = 'Cancelar edição';
+    cancelar.style.display = 'none';
+    salvar.after(cancelar);
+    cancelar.addEventListener('click', () => sairDaEdicao(form.dataset.colecao));
+
+    const campoFoto = form.querySelector('input[type=file]');
+    if(campoFoto){
+      const rotulo = campoFoto.previousElementSibling;
+      rotulo.dataset.textoOriginal = rotulo.textContent;
+      campoFoto.dataset.eraObrigatorio = campoFoto.required ? '1' : '';
+      const painel = document.createElement('div');
+      painel.className = 'fotos-atuais';
+      painel.style.display = 'none';
+      rotulo.before(painel);
+    }
+  });
+
+  function desenharFotosAtuais(colecao){
+    const painel = formDaAba(colecao).querySelector('.fotos-atuais');
+    if(!painel) return;
+    const est = EDICAO[colecao];
+    if(!est){ painel.style.display = 'none'; painel.innerHTML = ''; return; }
+    painel.style.display = 'block';
+    painel.innerHTML = '<label>Fotos desta memória (clique no ✕ para tirar)</label>' + (est.fotos.length
+      ? `<div class="fotos-atuais-grade">${est.fotos.map((u, i) => `<div class="foto-atual"><img src="${esc(u)}" alt=""><button type="button" data-i="${i}" title="Tirar esta foto">✕</button></div>`).join('')}</div>`
+      : '<p class="dica">Esta memória ainda não tem fotos — adicione abaixo.</p>');
+    painel.querySelectorAll('button[data-i]').forEach(b => {
+      b.addEventListener('click', () => { est.fotos.splice(parseInt(b.dataset.i, 10), 1); desenharFotosAtuais(colecao); });
+    });
+  }
+
+  function ajustarFormularioParaEdicao(colecao, editando, titulo){
+    const form = formDaAba(colecao);
+    const aviso = form.querySelector('.aviso-edicao');
+    aviso.style.display = editando ? 'block' : 'none';
+    aviso.textContent = editando ? `✏️ Editando: ${titulo}` : '';
+    const salvar = form.querySelector('.botao:not(.botao-secundario)');
+    salvar.textContent = editando ? 'Salvar alterações' : salvar.dataset.textoOriginal;
+    form.querySelector('.botao-secundario').style.display = editando ? '' : 'none';
+
+    const campoFoto = form.querySelector('input[type=file]');
+    if(campoFoto){
+      const rotulo = campoFoto.previousElementSibling;
+      rotulo.textContent = editando ? 'Adicionar mais fotos (opcional)' : rotulo.dataset.textoOriginal;
+      campoFoto.required = editando ? false : Boolean(campoFoto.dataset.eraObrigatorio);
+      const modo = form.querySelector('.bloco-modo');
+      if(modo) modo.style.display = 'none';
+    }
+  }
+
+  function entrarEmEdicao(colecao, id){
+    const item = (ITENS[colecao] || []).find(x => x.id === id);
+    if(!item) return;
+    const form = formDaAba(colecao);
+    form.reset();
+    form.querySelectorAll('[name]').forEach(el => {
+      const n = el.name;
+      if(['foto', 'senha', 'modo', 'colecao', 'imagens'].includes(n)) return;
+      if(n === 'tags') el.value = Array.isArray(item.tags) ? item.tags.join(', ') : '';
+      else el.value = item[n] !== undefined && item[n] !== null ? item[n] : '';
+    });
+    EDICAO[colecao] = { id, fotos: fotosDoItem(item) };
+    const { titulo } = APRESENTACAO[colecao](item);
+    ajustarFormularioParaEdicao(colecao, true, titulo);
+    desenharFotosAtuais(colecao);
+    form.querySelector('.mensagem').textContent = '';
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function sairDaEdicao(colecao){
+    delete EDICAO[colecao];
+    const form = formDaAba(colecao);
+    form.reset();
+    ajustarFormularioParaEdicao(colecao, false);
+    desenharFotosAtuais(colecao);
+  }
 
   /* --------- Fotos: reduzir no navegador e enviar uma por vez --------- */
   // Fotos de celular costumam ter vários MB, e a Vercel aceita ~4,5 MB por
@@ -473,11 +647,12 @@ function iniciarAreaAdmin(){
     return dados.url;
   }
 
-  // Só mostra "Como salvar essas fotos?" quando há mais de uma foto escolhida
+  // Só mostra "Como salvar essas fotos?" quando há mais de uma foto escolhida (e não está editando)
   document.querySelectorAll('.form-item input[type=file][multiple]').forEach(input => {
     input.addEventListener('change', () => {
-      const bloco = input.closest('form').querySelector('.bloco-modo');
-      if(bloco) bloco.style.display = input.files.length > 1 ? 'block' : 'none';
+      const form = input.closest('form');
+      const bloco = form.querySelector('.bloco-modo');
+      if(bloco) bloco.style.display = (!EDICAO[form.dataset.colecao] && input.files.length > 1) ? 'block' : 'none';
     });
   });
 
@@ -485,7 +660,8 @@ function iniciarAreaAdmin(){
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const colecao = form.dataset.colecao;
-      const botao = form.querySelector('.botao');
+      const edicao = EDICAO[colecao]; // undefined quando está adicionando
+      const botao = form.querySelector('.botao:not(.botao-secundario)');
       const mensagem = form.querySelector('.mensagem');
       const campoArquivo = form.querySelector('input[type=file]');
       botao.disabled = true;
@@ -493,38 +669,40 @@ function iniciarAreaAdmin(){
       mensagem.className = 'mensagem';
 
       try {
-        // 1) sobe cada foto, uma por vez
+        // 1) sobe as fotos novas, uma por vez (ao editar, as que já existiam e não foram tiradas continuam)
         const arquivos = campoArquivo ? Array.from(campoArquivo.files) : [];
-        const urls = [];
+        const urls = edicao ? edicao.fotos.slice() : [];
         for(let i = 0; i < arquivos.length; i++){
           mensagem.textContent = arquivos.length > 1 ? `Enviando foto ${i + 1} de ${arquivos.length}...` : 'Enviando foto...';
           const pronta = await prepararFoto(arquivos[i]);
           urls.push(await enviarUmaFoto(pronta));
         }
 
-        // 2) salva a memória com a lista de links
+        // 2) salva (cria ou atualiza) com a lista final de links
         mensagem.textContent = 'Salvando...';
         const formData = new FormData(form);
         formData.delete('foto');
         formData.set('colecao', colecao);
         formData.set('senha', SENHA_ADMIN);
         formData.set('imagens', JSON.stringify(urls));
+        if(edicao) formData.set('id', edicao.id);
 
-        const resposta = await fetch('/api/dados', { method: 'POST', body: formData });
+        const resposta = await fetch('/api/dados', { method: edicao ? 'PUT' : 'POST', body: formData });
         const dados = await resposta.json();
         if(!resposta.ok){
           mensagem.textContent = dados.erro || 'Não foi possível salvar.';
           mensagem.className = 'mensagem erro';
         } else {
-          const qtd = Array.isArray(dados.itens) ? dados.itens.length : 1;
-          mensagem.textContent = urls.length > 1
-            ? (qtd > 1 ? `${qtd} fotos salvas! ❤️` : `Memória salva com ${urls.length} fotos! ❤️`)
-            : 'Salvo com sucesso! ❤️';
-          mensagem.className = 'mensagem sucesso';
-          form.reset();
+          let texto;
+          if(edicao) texto = 'Alterações salvas! ❤️';
+          else if(urls.length > 1) texto = (Array.isArray(dados.itens) && dados.itens.length > 1) ? `${dados.itens.length} fotos salvas! ❤️` : `Memória salva com ${urls.length} fotos! ❤️`;
+          else texto = 'Salvo com sucesso! ❤️';
+          if(edicao) sairDaEdicao(colecao); else form.reset();
           const bloco = form.querySelector('.bloco-modo');
           if(bloco) bloco.style.display = 'none';
-          carregarLista(colecao);
+          mensagem.textContent = texto;
+          mensagem.className = 'mensagem sucesso';
+          Array.isArray(dados.lista) ? renderizarLista(colecao, dados.lista) : carregarLista(colecao);
         }
       } catch (erro) {
         mensagem.textContent = erro && erro.message ? erro.message : 'Erro de conexão. Tente novamente.';

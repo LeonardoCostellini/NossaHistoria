@@ -294,6 +294,7 @@ section{padding:80px 0; position:relative;}
   width:100%; height:100%; object-fit:cover; border-radius:50%;
   border:2px solid var(--paper); box-shadow:0 3px 7px rgba(74,50,38,0.25); display:block;
 }
+.aba-vazia{grid-column:1 / -1; text-align:center; color:var(--ink-soft); font-style:italic; padding:28px 8px; margin:0;}
 .timeline-fotos{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;}
 .timeline-foto{border-radius:8px; overflow:hidden; width:calc(50% - 4px); max-width:220px;}
 .timeline-fotos .timeline-foto:only-child{width:100%;}
@@ -988,6 +989,8 @@ function tocarSom(fn){
 // usado no álbum, calendário, cartões e planos, para os dois estarem
 // presentes organicamente por toda a experiência (item 13 do pedido original).
 // Lista de fotos de uma memória (itens antigos só têm "img"; os novos têm "imgs")
+function textoVazio(msg){ return `<p class="aba-vazia">${msg}</p>`; }
+
 function listaFotos(item){
   if(Array.isArray(item.imgs) && item.imgs.length) return item.imgs;
   return item.img ? [item.img] : [];
@@ -1151,6 +1154,7 @@ setInterval(renderEstadoCapa, 1000);
 let MEMORIAS_TIMELINE = MEMORIAS_TIMELINE_PADRAO;
 
 function renderTimeline(){
+  if(!MEMORIAS_TIMELINE.length){ document.getElementById('timeline').innerHTML = textoVazio('A nossa história está só começando por aqui ❤️'); return; }
   document.getElementById('timeline').innerHTML = MEMORIAS_TIMELINE.map((m,i) => `
     <div class="timeline-item reveal">
       <div class="timeline-marcador">${m.emoji}</div>
@@ -1173,8 +1177,8 @@ renderTimeline();
 fetch('/api/dados?colecao=momentos', {cache:'no-store'})
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(momentos => {
-    if(Array.isArray(momentos) && momentos.length > 0){
-      MEMORIAS_TIMELINE = momentos.slice().reverse(); // ordem cronológica (mais antigos primeiro)
+    if(Array.isArray(momentos)){
+      MEMORIAS_TIMELINE = momentos; // a ordem da lista (definida no /admin) é a ordem da linha do tempo
       renderTimeline();
     }
   })
@@ -1187,6 +1191,7 @@ const adesivos = ['💗','⭐','🌷','✨'];
 let FOTOS_ALBUM = FOTOS_ALBUM_PADRAO;
 
 function renderAlbum(){
+  if(!FOTOS_ALBUM.length){ document.getElementById('album-grade').innerHTML = textoVazio('Ainda vamos guardar nossas fotos por aqui ❤️'); return; }
   document.getElementById('album-grade').innerHTML = FOTOS_ALBUM.map((f,i) => `
     <div class="polaroid reveal visivel" data-indice="${i}">
       <div class="polaroid-adesivo">${adesivos[i % adesivos.length]}</div>
@@ -1207,7 +1212,7 @@ renderAlbum();
 fetch('/api/dados?colecao=fotos', {cache:'no-store'})
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(memorias => {
-    if(Array.isArray(memorias) && memorias.length > 0){
+    if(Array.isArray(memorias)){
       FOTOS_ALBUM = memorias;
       renderAlbum();
     }
@@ -1259,6 +1264,7 @@ const MESES_ABREV = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT'
 let EVENTOS_CALENDARIO = EVENTOS_CALENDARIO_PADRAO;
 
 function renderCalendario(){
+  if(!EVENTOS_CALENDARIO.length){ document.getElementById('calendario-lista').innerHTML = textoVazio('Nenhum momento marcado por enquanto ❤️'); return; }
   const ordenados = EVENTOS_CALENDARIO.slice().sort((a,b) => (a.dataISO||'').localeCompare(b.dataISO||''));
   document.getElementById('calendario-lista').innerHTML = ordenados.map((e,i) => {
     const d = e.dataISO ? new Date(e.dataISO + 'T00:00:00') : null;
@@ -1287,7 +1293,7 @@ renderCalendario();
 fetch('/api/dados?colecao=eventos', {cache:'no-store'})
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(eventos => {
-    if(Array.isArray(eventos) && eventos.length > 0){
+    if(Array.isArray(eventos)){
       EVENTOS_CALENDARIO = eventos;
       renderCalendario();
     }
@@ -1323,6 +1329,7 @@ document.getElementById('envelope').addEventListener('click', function(){
    ========================================================================= */
 let COISAS_QUE_AMO = COISAS_QUE_AMO_PADRAO;
 function renderCoisas(){
+  if(!COISAS_QUE_AMO.length){ document.getElementById('cartas-grade').innerHTML = textoVazio('Em breve, mais coisinhas que eu amo em você ❤️'); return; }
   document.getElementById('cartas-grade').innerHTML = COISAS_QUE_AMO.map((c,i) => `
     <div class="flip-card reveal visivel" data-i="${i}">
       ${mascoteMini(i, 'top:-8px; right:-8px;')}
@@ -1339,7 +1346,7 @@ function renderCoisas(){
 renderCoisas();
 fetch('/api/dados?colecao=coisas', {cache:'no-store'})
   .then(r => r.ok ? r.json() : Promise.reject())
-  .then(itens => { if(Array.isArray(itens) && itens.length > 0){ COISAS_QUE_AMO = itens; renderCoisas(); } })
+  .then(itens => { if(Array.isArray(itens)){ COISAS_QUE_AMO = itens; renderCoisas(); } })
   .catch(() => { /* segue com o fallback local */ });
 
 /* =========================================================================
@@ -1347,6 +1354,7 @@ fetch('/api/dados?colecao=coisas', {cache:'no-store'})
    ========================================================================= */
 let PLANOS_FUTUROS = PLANOS_FUTUROS_PADRAO;
 function renderPlanos(){
+  if(!PLANOS_FUTUROS.length){ document.getElementById('planos-colunas').innerHTML = textoVazio('Nossos planos vão aparecer por aqui ❤️'); return; }
   const grupos = PLANOS_STATUS_ORDEM.map(status => ({
     status, label: PLANOS_STATUS_LABEL[status],
     itens: PLANOS_FUTUROS.filter(p => (p.status || 'queremos') === status),
@@ -1369,7 +1377,7 @@ function renderPlanos(){
 renderPlanos();
 fetch('/api/dados?colecao=planos', {cache:'no-store'})
   .then(r => r.ok ? r.json() : Promise.reject())
-  .then(itens => { if(Array.isArray(itens) && itens.length > 0){ PLANOS_FUTUROS = itens; renderPlanos(); } })
+  .then(itens => { if(Array.isArray(itens)){ PLANOS_FUTUROS = itens; renderPlanos(); } })
   .catch(() => { /* segue com o fallback local */ });
 
 /* =========================================================================

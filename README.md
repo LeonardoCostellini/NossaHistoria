@@ -25,6 +25,37 @@ aba — os formulários não pedem mais senha individualmente.
 (adiciona quantos itens quiser, remove um por um). Carta e Configurações
 são um **valor único** — salvar substitui o que já existia.
 
+## Editar, remover e deixar uma aba livre
+
+Em cada aba de lista (Álbum, Linha do tempo, Calendário, Sobre vocês, Planos),
+cada item tem dois botões:
+
+- **editar** — o formulário lá em cima passa para o modo de edição (aviso
+  "✏️ Editando"), já preenchido com os dados do item. Nas abas com foto
+  (Álbum e Linha do tempo) aparecem as fotos atuais, cada uma com um ✕ para
+  tirar, e o campo **"Adicionar mais fotos"** para incluir outras na mesma
+  memória. Vale também para os itens que já vinham de exemplo.
+- **remover** — apaga o item (e as fotos dele).
+
+No topo de cada lista há o **"apagar tudo"**, que deixa a aba totalmente
+vazia para você escrever do zero. Uma aba vazia no site mostra só uma
+mensagem carinhosa (os exemplos do código não voltam).
+
+Na **Linha do tempo**, a ordem do site é a ordem da lista: o que você
+adiciona entra no final.
+
+### Por que o armazenamento é "versionado"
+
+O Vercel Blob guarda arquivos numa CDN com cache: ao regravar um arquivo no
+mesmo caminho, quem lê pode receber a versão antiga por até ~60 segundos.
+Antes, isso fazia o "remover" parecer não funcionar (e a remoção seguinte
+podia trazer de volta itens já apagados). Agora cada salvamento cria um
+arquivo novo (`memorias/<aba>/<hora>-<id>.json`) e a leitura sempre pega o
+mais recente; as 3 versões mais novas ficam guardadas e as demais são
+apagadas. Dados salvos no formato antigo continuam sendo lidos e são
+migrados no primeiro salvamento. Se a leitura falhar, a operação é cancelada
+em vez de sobrescrever seus dados com o conteúdo de exemplo.
+
 ## Várias fotos de uma vez
 
 No **Álbum**, selecione quantas fotos quiser no mesmo campo (no computador,
@@ -42,8 +73,8 @@ Na **Linha do tempo**, várias fotos ficam juntas no mesmo momento.
 Por trás: a Vercel aceita no máximo ~4,5 MB por envio, e fotos de celular
 passam disso. Por isso o navegador reduz cada foto (lado maior de 1800 px)
 e envia **uma por vez** (`api/upload.js`); só depois a memória é salva com a
-lista de links (`api/dados.js`). Ao remover uma memória, todas as fotos dela
-são apagadas do Blob.
+lista de links (`api/dados.js`). Ao remover uma memória (ou tirar uma foto
+dela pelo ✕ ao editar), as fotos correspondentes são apagadas do Blob.
 
 ## Aniversários automáticos
 

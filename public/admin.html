@@ -280,10 +280,9 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
         <input type="text" name="nomeDela" id="config-nomeDela">
         <label>Seu nome</label>
         <input type="text" name="meuNome" id="config-meuNome">
-        <div class="linha-dupla">
-          <div><label>Início do relacionamento</label><input type="date" name="inicioRelacionamento" id="config-inicio"></div>
-          <div><label>Data comemorativa</label><input type="date" name="dataComemorativa" id="config-comemorativa"></div>
-        </div>
+        <label>Início do relacionamento</label>
+        <input type="date" name="inicioRelacionamento" id="config-inicio">
+        <p class="dica">Os aniversários (1 ano, 2 anos, 3 anos...) e a contagem regressiva são calculados automaticamente a partir dessa data.</p>
         <button type="submit" class="botao">Salvar configurações</button>
         <div class="mensagem"></div>
       </form>
@@ -492,7 +491,6 @@ function iniciarAreaAdmin(){
         document.getElementById('config-nomeDela').value = dados.nomeDela || '';
         document.getElementById('config-meuNome').value = dados.meuNome || '';
         if(dados.inicioRelacionamento) document.getElementById('config-inicio').value = dados.inicioRelacionamento.slice(0,10);
-        if(dados.dataComemorativa) document.getElementById('config-comemorativa').value = dados.dataComemorativa.slice(0,10);
       }
     });
   document.getElementById('form-config').addEventListener('submit', async (e) => {

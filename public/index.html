@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>Nossa História — 2 anos de nós</title>
-<meta property="og:title" content="Nossa História — 2 anos de nós ❤️">
-<meta property="og:description" content="07.10.2026 — nossa história ainda está sendo escrita.">
+<title>Nossa História ❤️</title>
+<meta property="og:title" content="Nossa História ❤️">
+<meta property="og:description" content="Nossa história ainda está sendo escrita.">
 <meta property="og:image" content="/assets/bubu-dudu/og-image.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Nossa História — 2 anos de nós ❤️">
+<meta name="twitter:title" content="Nossa História ❤️">
 <meta name="twitter:image" content="/assets/bubu-dudu/og-image.png">
 <link rel="icon" type="image/png" sizes="48x48" href="/assets/bubu-dudu/favicon-48.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/bubu-dudu/favicon-32.png">
@@ -553,8 +553,8 @@ footer .footer-coracao{color:var(--rose-deep);}
     </div>
     <p class="capa-eyebrow">para <span id="nome-dela-capa">[NOME DELA]</span></p>
     <h1 class="capa-titulo">Nossa história</h1>
-    <p class="capa-subtitulo">2 anos de nós ❤️</p>
-    <p class="capa-data">07 · 10 · 2026</p>
+    <p class="capa-subtitulo" id="capa-subtitulo">de nós ❤️</p>
+    <p class="capa-data" id="capa-data"></p>
     <button class="capa-cta" id="botao-entrar">Entrar na nossa história</button>
     <div class="hero-estado-especial" id="hero-estado-especial"></div>
   </div>
@@ -696,13 +696,13 @@ footer .footer-coracao{color:var(--rose-deep);}
   </div>
 </div>
 
-<!-- EXPERIÊNCIA DO DIA 07/10/2026 -->
+<!-- EXPERIÊNCIA ESPECIAL DO DIA DO ANIVERSÁRIO (preenchida por JavaScript, vale para todos os anos) -->
 <div id="dia-especial-overlay">
   <div class="dia-especial-conteudo">
     <div style="font-size:2.6rem;">🎉</div>
-    <h2>Hoje nossa história completa 2 anos.</h2>
-    <p style="font-size:1.1rem;">07 de outubro de 2026</p>
-    <p>2 anos de nós. 730 dias de histórias, risadas, abraços, momentos bons, momentos difíceis e, acima de tudo, nós dois.</p>
+    <h2 id="dia-especial-titulo"></h2>
+    <p style="font-size:1.1rem;" id="dia-especial-data"></p>
+    <p id="dia-especial-mensagem"></p>
     <button class="dia-especial-fechar" id="fechar-dia-especial">viver esse dia</button>
   </div>
 </div>
@@ -731,7 +731,6 @@ let CONFIG = {
   nomeDela: "Roberta Hikaru Miyazaki",
   meuNome: "Leonardo Barreiro Costellini",
   inicioRelacionamento: "2024-10-07T00:00:00",
-  dataComemorativa: "2026-10-07T00:00:00",
 };
 
 // Fallback — aparece até você criar "momentos" reais pelo /admin.html
@@ -1033,11 +1032,45 @@ function calcularDiferenca(inicio, agora){
   return {anos, meses, dias, horas, minutos, segundos};
 }
 
+// ---------------------------------------------------------------------
+// Aniversários de namoro — calculados automaticamente a partir da data de
+// início (sempre no mesmo dia/mês). Assim o site continua funcionando nos
+// próximos anos: no dia do aniversário celebra os N anos E já mostra a
+// contagem para o aniversário seguinte (N+1).
+// ---------------------------------------------------------------------
+function plural(n, singular, pluralTxt){ return n === 1 ? singular : pluralTxt; }
+
+function infoAniversarios(agora){
+  const inicio = new Date(CONFIG.inicioRelacionamento);
+  const msDia = 24*60*60*1000;
+  const hoje0 = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+  const inicio0 = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+  const aniversarioEm = (ano) => new Date(ano, inicio.getMonth(), inicio.getDate());
+
+  // anos completos até hoje (no dia do aniversário já conta)
+  let anosCompletos = agora.getFullYear() - inicio.getFullYear();
+  if(hoje0 < aniversarioEm(agora.getFullYear())) anosCompletos--;
+  if(anosCompletos < 0) anosCompletos = 0;
+
+  const ehHoje = anosCompletos >= 1 && hoje0.getTime() === aniversarioEm(agora.getFullYear()).getTime();
+
+  // próximo aniversário (sempre no futuro; no próprio dia aponta para o do ano seguinte)
+  let proximo = aniversarioEm(agora.getFullYear());
+  if(proximo <= agora) proximo = aniversarioEm(agora.getFullYear() + 1);
+  const anosProximo = proximo.getFullYear() - inicio.getFullYear();
+
+  // último aniversário já vivido (para exibir a data na capa)
+  const ultimo = anosCompletos >= 1 ? aniversarioEm(inicio.getFullYear() + anosCompletos) : inicio0;
+  const totalDias = Math.round((hoje0 - inicio0) / msDia);
+
+  return { anosCompletos, ehHoje, proximo, anosProximo, ultimo, totalDias };
+}
+
 function renderContador(){
   const agora = new Date();
   const inicio = new Date(CONFIG.inicioRelacionamento);
-  const dataComemorativa = new Date(CONFIG.dataComemorativa);
   const d = calcularDiferenca(inicio, agora);
+  const info = infoAniversarios(agora);
   const grade = document.getElementById('contador-grade');
   const itens = [
     {v:d.anos, l:'anos'}, {v:d.meses, l:'meses'}, {v:d.dias, l:'dias'},
@@ -1050,10 +1083,10 @@ function renderContador(){
     </div>`).join('');
 
   let frase;
-  if(agora < dataComemorativa){
-    frase = `Caminhando juntos até os nossos 2 anos ❤️`;
+  if(info.ehHoje){
+    frase = `Hoje completamos ${info.anosCompletos} ${plural(info.anosCompletos,'ano','anos')} de nós ❤️`;
   } else {
-    frase = `${d.anos} anos, ${d.meses} meses e ${d.dias} dias... e contando.`;
+    frase = `${d.anos} ${plural(d.anos,'ano','anos')}, ${d.meses} ${plural(d.meses,'mês','meses')} e ${d.dias} ${plural(d.dias,'dia','dias')}... e contando.`;
   }
   document.getElementById('contador-frase').textContent = frase;
 }
@@ -1062,23 +1095,30 @@ setInterval(renderContador, 1000);
 
 function renderEstadoCapa(){
   const agora = new Date();
-  const dataComemorativa = new Date(CONFIG.dataComemorativa);
-  const elemento = document.getElementById('hero-estado-especial');
+  const info = infoAniversarios(agora);
   const msDia = 24*60*60*1000;
-  const mesmodia = agora.toDateString() === dataComemorativa.toDateString();
+  const elemento = document.getElementById('hero-estado-especial');
 
-  if(mesmodia){
-    elemento.innerHTML = `Hoje é o nosso dia. ❤️`;
-  } else if(agora < dataComemorativa){
-    const diff = dataComemorativa - agora;
-    const dd = Math.floor(diff/msDia);
-    const hh = Math.floor((diff%msDia)/(60*60*1000));
-    const mm = Math.floor((diff%(60*60*1000))/(60*1000));
-    const ss = Math.floor((diff%(60*1000))/1000);
-    elemento.innerHTML = `Faltam ${dd}d ${hh}h ${mm}m ${ss}s para o nosso aniversário de 2 anos ❤️`;
+  // subtítulo e data da capa acompanham o último aniversário vivido
+  const n = info.anosCompletos;
+  document.getElementById('capa-subtitulo').textContent =
+    n >= 1 ? `${n} ${plural(n,'ano','anos')} de nós ❤️` : 'Nossa história começou ❤️';
+  const dd2 = String(info.ultimo.getDate()).padStart(2,'0');
+  const mm2 = String(info.ultimo.getMonth()+1).padStart(2,'0');
+  document.getElementById('capa-data').textContent = `${dd2} · ${mm2} · ${info.ultimo.getFullYear()}`;
+
+  // contagem regressiva para o PRÓXIMO aniversário
+  const diff = info.proximo - agora;
+  const dd = Math.floor(diff/msDia);
+  const hh = Math.floor((diff%msDia)/(60*60*1000));
+  const mm = Math.floor((diff%(60*60*1000))/(60*1000));
+  const ss = Math.floor((diff%(60*1000))/1000);
+  const contagem = `Faltam ${dd}d ${hh}h ${mm}m ${ss}s para o nosso aniversário de ${info.anosProximo} anos ❤️`;
+
+  if(info.ehHoje){
+    elemento.innerHTML = `Hoje é o nosso dia. ❤️<br><span style="font-size:0.85em; opacity:0.85;">${contagem}</span>`;
   } else {
-    const d = calcularDiferenca(dataComemorativa, agora);
-    elemento.innerHTML = `2 anos e contando... (+${d.meses}m ${d.dias}d)`;
+    elemento.innerHTML = contagem;
   }
 }
 renderEstadoCapa();
@@ -1406,15 +1446,24 @@ function dispararConfete(){
 }
 function verificarDiaEspecial(){
   const agora = new Date();
-  const dataComemorativa = new Date(CONFIG.dataComemorativa);
-  const mesmodia = agora.toDateString() === dataComemorativa.toDateString();
-  if(mesmodia && !sessionStorage.getItem('nossaHistoriaDiaEspecialVisto')){
-    const overlay = document.getElementById('dia-especial-overlay');
-    overlay.classList.add('aberto');
-    dispararConfete();
-    tocarSom(Sons.comemoracao);
-    sessionStorage.setItem('nossaHistoriaDiaEspecialVisto', '1');
-  }
+  const info = infoAniversarios(agora);
+  if(!info.ehHoje) return;
+
+  // uma vez por aniversário (por ano), por sessão do navegador
+  const chave = 'nossaHistoriaDiaEspecialVisto-' + agora.getFullYear();
+  if(sessionStorage.getItem(chave)) return;
+
+  const n = info.anosCompletos;
+  const dataLonga = agora.toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'});
+  document.getElementById('dia-especial-titulo').textContent = `Hoje nossa história completa ${n} ${plural(n,'ano','anos')}.`;
+  document.getElementById('dia-especial-data').textContent = dataLonga;
+  document.getElementById('dia-especial-mensagem').textContent =
+    `${n} ${plural(n,'ano','anos')} de nós. ${info.totalDias} dias de histórias, risadas, abraços, momentos bons, momentos difíceis e, acima de tudo, nós dois.`;
+
+  document.getElementById('dia-especial-overlay').classList.add('aberto');
+  dispararConfete();
+  tocarSom(Sons.comemoracao);
+  sessionStorage.setItem(chave, '1');
 }
 document.getElementById('fechar-dia-especial').addEventListener('click', () => {
   document.getElementById('dia-especial-overlay').classList.remove('aberto');
@@ -1440,7 +1489,6 @@ fetch('/api/dados?colecao=config', {cache:'no-store'})
         ...dados,
         // datas: se vierem só como "AAAA-MM-DD" (input type="date"), completa a hora
         inicioRelacionamento: dados.inicioRelacionamento ? dados.inicioRelacionamento + (dados.inicioRelacionamento.includes('T') ? '' : 'T00:00:00') : CONFIG.inicioRelacionamento,
-        dataComemorativa: dados.dataComemorativa ? dados.dataComemorativa + (dados.dataComemorativa.includes('T') ? '' : 'T00:00:00') : CONFIG.dataComemorativa,
       };
       aplicarConfigNaPagina();
     }

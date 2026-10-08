@@ -19,11 +19,20 @@ aba — os formulários não pedem mais senha individualmente.
 - 💌 **Carta** — o texto da carta de amor e a assinatura
 - 💗 **Sobre vocês** — os cartões que viram ("coisas que amo em você")
 - 🎯 **Planos** — sonhos e planos futuros, com status (queremos / marcado / já fizemos)
-- ⚙️ **Configurações** — nome dela, seu nome, data de início e data comemorativa
+- ⚙️ **Configurações** — nome dela, seu nome e data de início do relacionamento
 
 Álbum, linha do tempo, calendário, "sobre vocês" e planos são **listas**
 (adiciona quantos itens quiser, remove um por um). Carta e Configurações
 são um **valor único** — salvar substitui o que já existia.
+
+## Aniversários automáticos
+
+Os aniversários de namoro são calculados sozinhos a partir da data de
+início (sempre no mesmo dia/mês). No dia do aniversário o site mostra a
+celebração dos N anos (confete, mensagem com o total de dias) **e já exibe a
+contagem regressiva para os N+1 anos**; nos outros dias, a contagem aponta
+para o próximo aniversário. O subtítulo e a data da capa acompanham o
+último aniversário vivido. Nada precisa ser editado a cada ano.
 
 ## O conteúdo padrão agora é editável de verdade
 

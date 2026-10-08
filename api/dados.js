@@ -128,13 +128,11 @@ const COLECOES = {
       nomeDela: 'Roberta Hikaru Miyazaki',
       meuNome: 'Leonardo Barreiro Costellini',
       inicioRelacionamento: '2024-10-07',
-      dataComemorativa: '2026-10-07',
     },
     montar: (fields) => ({
       nomeDela: campoTexto(fields, 'nomeDela'),
       meuNome: campoTexto(fields, 'meuNome'),
       inicioRelacionamento: campoTexto(fields, 'inicioRelacionamento'),
-      dataComemorativa: campoTexto(fields, 'dataComemorativa'),
     }),
   },
   carta: {

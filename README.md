@@ -13,8 +13,8 @@ aba — os formulários não pedem mais senha individualmente.
 
 ## O que dá para editar pelo /admin
 
-- 📸 **Álbum** — fotos, com título, data, local, frase e tags
-- 🕰️ **Linha do tempo** — os momentos do relacionamento, com foto opcional
+- 📸 **Álbum** — fotos, com título, data, local, frase e tags. Dá para escolher **várias fotos de uma vez**
+- 🕰️ **Linha do tempo** — os momentos do relacionamento, com **fotos opcionais** (uma ou várias)
 - 📅 **Calendário** — próximos eventos, com data, status e categoria
 - 💌 **Carta** — o texto da carta de amor e a assinatura
 - 💗 **Sobre vocês** — os cartões que viram ("coisas que amo em você")
@@ -24,6 +24,26 @@ aba — os formulários não pedem mais senha individualmente.
 Álbum, linha do tempo, calendário, "sobre vocês" e planos são **listas**
 (adiciona quantos itens quiser, remove um por um). Carta e Configurações
 são um **valor único** — salvar substitui o que já existia.
+
+## Várias fotos de uma vez
+
+No **Álbum**, selecione quantas fotos quiser no mesmo campo (no computador,
+segure Ctrl/Shift; no celular, marque várias na galeria). Quando houver mais
+de uma, aparece a pergunta **"Como salvar essas fotos?"**:
+
+- **Uma memória para cada foto** (padrão) — cada foto vira um polaroid
+  próprio; título, data, local e frase valem para todas.
+- **Uma única memória com todas as fotos juntas** — vira um polaroid só, com
+  um selo "📷 3"; ao abrir, aparecem miniaturas para passar de uma foto para
+  outra.
+
+Na **Linha do tempo**, várias fotos ficam juntas no mesmo momento.
+
+Por trás: a Vercel aceita no máximo ~4,5 MB por envio, e fotos de celular
+passam disso. Por isso o navegador reduz cada foto (lado maior de 1800 px)
+e envia **uma por vez** (`api/upload.js`); só depois a memória é salva com a
+lista de links (`api/dados.js`). Ao remover uma memória, todas as fotos dela
+são apagadas do Blob.
 
 ## Aniversários automáticos
 
@@ -80,6 +100,7 @@ imagens reais que você forneceu, com o fundo removido, guardadas em
 nossa-historia/
 ├── api/
 │   ├── dados.js          <- API para as coleções (fotos, momentos, eventos, coisas, planos, config, carta)
+│   ├── upload.js         <- recebe uma foto por vez e guarda no Blob
 │   └── login.js          <- verifica a senha para liberar o /admin
 ├── public/
 │   ├── index.html         <- o site

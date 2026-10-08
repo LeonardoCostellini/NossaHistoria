@@ -127,10 +127,19 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
   <!-- =================== ÁLBUM =================== -->
   <div class="painel ativo" id="painel-fotos">
     <div class="cartao">
-      <h2>Adicionar uma foto</h2>
+      <h2>Adicionar fotos</h2>
       <form class="form-item" data-colecao="fotos">
-        <label>Foto</label>
-        <input type="file" name="foto" accept="image/*" required>
+        <label>Fotos</label>
+        <input type="file" name="foto" accept="image/*" multiple required>
+        <p class="dica">Dá para escolher várias de uma vez (segure Ctrl/Shift no computador, ou marque várias no celular).</p>
+        <div class="bloco-modo" style="display:none;">
+          <label>Como salvar essas fotos?</label>
+          <select name="modo">
+            <option value="separadas">Uma memória para cada foto (cada uma vira um polaroid)</option>
+            <option value="juntas">Uma única memória com todas as fotos juntas</option>
+          </select>
+          <p class="dica">O título, a data, o local e a frase abaixo valem para todas.</p>
+        </div>
         <label>Título</label>
         <input type="text" name="titulo" placeholder="Ex: Nosso primeiro passeio" required>
         <div class="linha-dupla">
@@ -141,7 +150,7 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
         <textarea name="frase" placeholder="Uma frase sobre esse momento"></textarea>
         <label>Tags (separadas por vírgula)</label>
         <input type="text" name="tags" placeholder="Ex: viagem, 2025">
-        <button type="submit" class="botao">Salvar foto</button>
+        <button type="submit" class="botao">Salvar fotos</button>
         <div class="mensagem"></div>
       </form>
     </div>
@@ -164,8 +173,9 @@ a.voltar{display:inline-block; margin-top:6px; color:var(--ink-soft); font-size:
         </div>
         <label>Descrição</label>
         <textarea name="texto" placeholder="O que aconteceu nesse momento"></textarea>
-        <label>Foto (opcional)</label>
-        <input type="file" name="foto" accept="image/*">
+        <label>Fotos (opcional)</label>
+        <input type="file" name="foto" accept="image/*" multiple>
+        <p class="dica">Pode escolher mais de uma — elas aparecem juntas nesse momento da linha do tempo.</p>
         <button type="submit" class="botao">Salvar momento</button>
         <div class="mensagem"></div>
       </form>
@@ -369,9 +379,14 @@ function iniciarAreaAdmin(){
     });
   });
 
+  function textoQtdFotos(m){
+    const n = Array.isArray(m.imgs) ? m.imgs.length : 0;
+    return n > 1 ? ` · 📷 ${n} fotos` : '';
+  }
+
   const APRESENTACAO = {
-    fotos: (m) => ({ titulo: m.titulo, subtitulo: `${m.data || ''}${m.local ? ' · ' + m.local : ''}`, emoji: m.emoji || '📷' }),
-    momentos: (m) => ({ titulo: m.titulo, subtitulo: m.data || '', emoji: m.emoji || '❤️' }),
+    fotos: (m) => ({ titulo: m.titulo, subtitulo: `${m.data || ''}${m.local ? ' · ' + m.local : ''}${textoQtdFotos(m)}`, emoji: m.emoji || '📷' }),
+    momentos: (m) => ({ titulo: m.titulo, subtitulo: `${m.data || ''}${textoQtdFotos(m)}`, emoji: m.emoji || '❤️' }),
     eventos: (m) => ({ titulo: m.titulo, subtitulo: m.dataISO || '', emoji: m.emoji || '❤️' }),
     coisas: (m) => ({ titulo: m.frente, subtitulo: m.verso || '', emoji: m.emoji || '💗' }),
     planos: (m) => ({ titulo: m.titulo, subtitulo: m.status || '', emoji: '🎯' }),
@@ -415,34 +430,104 @@ function iniciarAreaAdmin(){
 
   ['fotos','momentos','eventos','coisas','planos'].forEach(carregarLista);
 
+  /* --------- Fotos: reduzir no navegador e enviar uma por vez --------- */
+  // Fotos de celular costumam ter vários MB, e a Vercel aceita ~4,5 MB por
+  // envio. Por isso cada foto é reduzida (lado maior 1800px, JPEG) antes de subir.
+  async function prepararFoto(arquivo){
+    const LIMITE = 4 * 1024 * 1024;
+    let resultado = arquivo;
+    try {
+      const bmp = await createImageBitmap(arquivo, { imageOrientation: 'from-image' });
+      const esc = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+      if(esc < 1 || arquivo.size > 1024 * 1024){
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(bmp.width * esc);
+        canvas.height = Math.round(bmp.height * esc);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.85));
+        if(blob && blob.size < arquivo.size){
+          const nome = (arquivo.name || 'foto').replace(/\.[^.]+$/, '') + '.jpg';
+          resultado = new File([blob], nome, { type: 'image/jpeg' });
+        }
+      }
+    } catch (erro) { /* formato que o navegador não consegue reduzir: tenta enviar o original */ }
+    if(resultado.size > LIMITE){
+      throw new Error(`A foto "${arquivo.name}" é grande demais (${(resultado.size/1024/1024).toFixed(1)} MB) e não deu para reduzir. Tente outra.`);
+    }
+    return resultado;
+  }
+
+  async function enviarUmaFoto(arquivo){
+    const fd = new FormData();
+    fd.set('senha', SENHA_ADMIN);
+    fd.set('foto', arquivo, arquivo.name);
+    const resp = await fetch('/api/upload', { method: 'POST', body: fd });
+    let dados = {};
+    try { dados = await resp.json(); } catch (e) {}
+    if(!resp.ok || !dados.url){
+      throw new Error(dados.erro || (resp.status === 413 ? 'Foto grande demais para enviar.' : 'Não consegui enviar a foto.'));
+    }
+    return dados.url;
+  }
+
+  // Só mostra "Como salvar essas fotos?" quando há mais de uma foto escolhida
+  document.querySelectorAll('.form-item input[type=file][multiple]').forEach(input => {
+    input.addEventListener('change', () => {
+      const bloco = input.closest('form').querySelector('.bloco-modo');
+      if(bloco) bloco.style.display = input.files.length > 1 ? 'block' : 'none';
+    });
+  });
+
   document.querySelectorAll('.form-item').forEach(form => {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const colecao = form.dataset.colecao;
       const botao = form.querySelector('.botao');
       const mensagem = form.querySelector('.mensagem');
+      const campoArquivo = form.querySelector('input[type=file]');
       botao.disabled = true;
       mensagem.textContent = 'Enviando...';
       mensagem.className = 'mensagem';
 
-      const formData = new FormData(form);
-      formData.set('colecao', colecao);
-      formData.set('senha', SENHA_ADMIN);
-
       try {
+        // 1) sobe cada foto, uma por vez
+        const arquivos = campoArquivo ? Array.from(campoArquivo.files) : [];
+        const urls = [];
+        for(let i = 0; i < arquivos.length; i++){
+          mensagem.textContent = arquivos.length > 1 ? `Enviando foto ${i + 1} de ${arquivos.length}...` : 'Enviando foto...';
+          const pronta = await prepararFoto(arquivos[i]);
+          urls.push(await enviarUmaFoto(pronta));
+        }
+
+        // 2) salva a memória com a lista de links
+        mensagem.textContent = 'Salvando...';
+        const formData = new FormData(form);
+        formData.delete('foto');
+        formData.set('colecao', colecao);
+        formData.set('senha', SENHA_ADMIN);
+        formData.set('imagens', JSON.stringify(urls));
+
         const resposta = await fetch('/api/dados', { method: 'POST', body: formData });
         const dados = await resposta.json();
         if(!resposta.ok){
           mensagem.textContent = dados.erro || 'Não foi possível salvar.';
           mensagem.className = 'mensagem erro';
         } else {
-          mensagem.textContent = 'Salvo com sucesso! ❤️';
+          const qtd = Array.isArray(dados.itens) ? dados.itens.length : 1;
+          mensagem.textContent = urls.length > 1
+            ? (qtd > 1 ? `${qtd} fotos salvas! ❤️` : `Memória salva com ${urls.length} fotos! ❤️`)
+            : 'Salvo com sucesso! ❤️';
           mensagem.className = 'mensagem sucesso';
           form.reset();
+          const bloco = form.querySelector('.bloco-modo');
+          if(bloco) bloco.style.display = 'none';
           carregarLista(colecao);
         }
       } catch (erro) {
-        mensagem.textContent = 'Erro de conexão. Tente novamente.';
+        mensagem.textContent = erro && erro.message ? erro.message : 'Erro de conexão. Tente novamente.';
         mensagem.className = 'mensagem erro';
       } finally {
         botao.disabled = false;

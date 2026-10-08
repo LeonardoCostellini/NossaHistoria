@@ -10,14 +10,14 @@
 //   DELETE /api/dados?colecao=X&id=Y&senha=Z        (só para coleções "lista")
 //
 // Cada coleção vira um arquivo JSON ("manifesto") guardado no Vercel Blob.
-// As fotos (quando existem) também vão para o Blob, como arquivo binário.
+// As fotos são enviadas antes, uma a uma, por /api/upload (Blob); aqui só
+// guardamos os links delas junto com os textos.
 //
 // Requer a variável de ambiente ADMIN_PASSWORD para autorizar escrita/remoção.
 // Leitura (GET) é livre, assim como o próprio site.
 
 import { put, del, list } from '@vercel/blob';
 import formidable from 'formidable';
-import fs from 'fs';
 
 export const config = {
   api: { bodyParser: false },
@@ -202,11 +202,13 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const form = formidable({ maxFileSize: 15 * 1024 * 1024 });
+      // O formulário chega como multipart só com texto; as fotos já foram
+      // enviadas antes, uma a uma, por /api/upload — aqui chega só a lista de links.
+      const form = formidable({ maxFileSize: 1024 * 1024, allowEmptyFiles: true, minFileSize: 0 });
 
-      let fields, files;
+      let fields;
       try {
-        [fields, files] = await form.parse(req);
+        [fields] = await form.parse(req);
       } catch (erro) {
         console.error('Erro ao ler formulário:', erro);
         return res.status(400).json({ erro: 'Não consegui ler o formulário enviado: ' + erro.message });
@@ -221,28 +223,6 @@ export default async function handler(req, res) {
         return res.status(401).json({ erro: 'Senha incorreta.' });
       }
 
-      let urlFoto = null;
-      const arquivo = Array.isArray(files.foto) ? files.foto[0] : files.foto;
-
-      if (config.obrigatorioFoto && !arquivo) {
-        return res.status(400).json({ erro: 'Esta seção exige uma foto.' });
-      }
-
-      if (config.permiteFoto && arquivo) {
-        try {
-          const buffer = fs.readFileSync(arquivo.filepath);
-          const nomeArquivo = `fotos/${Date.now()}-${(arquivo.originalFilename || 'foto').replace(/[^a-zA-Z0-9._-]/g, '-')}`;
-          const blob = await put(nomeArquivo, buffer, {
-            access: 'public',
-            contentType: arquivo.mimetype || 'image/jpeg',
-          });
-          urlFoto = blob.url;
-        } catch (erro) {
-          console.error('Erro ao enviar foto para o Blob:', erro);
-          return res.status(500).json({ erro: 'Não consegui salvar a foto: ' + erro.message });
-        }
-      }
-
       // ---- Coleção "única" (config / carta): substitui o objeto inteiro ----
       if (config.tipo === 'unico') {
         const item = { ...config.montar(fields), atualizadoEm: new Date().toISOString() };
@@ -250,19 +230,48 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true, item });
       }
 
-      // ---- Coleção "lista": adiciona um novo item ----
-      const item = {
-        id: Date.now().toString(),
+      // ---- Fotos já enviadas (lista de links vinda do admin) ----
+      let urls = [];
+      try {
+        const bruto = JSON.parse(campoTexto(fields, 'imagens') || '[]');
+        if (Array.isArray(bruto)) {
+          urls = bruto.filter((u) => typeof u === 'string' && u.startsWith('https://')).slice(0, 40);
+        }
+      } catch (erro) {
+        return res.status(400).json({ erro: 'Lista de fotos inválida.' });
+      }
+
+      if (config.obrigatorioFoto && urls.length === 0) {
+        return res.status(400).json({ erro: 'Esta seção exige pelo menos uma foto.' });
+      }
+      if (!config.permiteFoto) urls = [];
+
+      const agora = Date.now();
+      const criadoEm = new Date().toISOString();
+      const base = (extra, i, total) => ({
+        id: total > 1 ? `${agora}-${i}` : String(agora),
         ...config.montar(fields),
-        ...(urlFoto ? { img: urlFoto } : {}),
-        criadoEm: new Date().toISOString(),
-      };
+        ...extra,
+        criadoEm,
+      });
+
+      let novosItens;
+      const separadas = colecao === 'fotos' && (campoTexto(fields, 'modo') || 'separadas') === 'separadas';
+      if (separadas && urls.length > 1) {
+        // uma memória para cada foto (mesmo título/data/local/frase)
+        novosItens = urls.map((u, i) => base({ img: u, imgs: [u] }, i, urls.length));
+      } else if (urls.length > 0) {
+        // uma memória com todas as fotos juntas
+        novosItens = [base({ img: urls[0], imgs: urls }, 0, 1)];
+      } else {
+        novosItens = [base({}, 0, 1)];
+      }
 
       const lista = await lerManifesto(config.manifesto, config.padrao || []);
-      lista.unshift(item);
+      lista.unshift(...novosItens);
       await salvarManifesto(config.manifesto, lista);
 
-      return res.status(200).json({ ok: true, item });
+      return res.status(200).json({ ok: true, itens: novosItens, item: novosItens[0] });
     }
 
     if (req.method === 'DELETE') {
@@ -279,8 +288,10 @@ export default async function handler(req, res) {
       const item = lista.find((m) => m.id === id);
       if (!item) return res.status(404).json({ erro: 'Item não encontrado.' });
 
-      if (item.img) {
-        try { await del(item.img); } catch (erro) { console.error('Aviso: não consegui apagar a foto:', erro); }
+      // apaga todas as fotos da memória (a principal + as extras)
+      const arquivos = [...new Set([item.img, ...(Array.isArray(item.imgs) ? item.imgs : [])].filter(Boolean))];
+      if (arquivos.length > 0) {
+        try { await del(arquivos); } catch (erro) { console.error('Aviso: não consegui apagar as fotos:', erro); }
       }
 
       const restantes = lista.filter((m) => m.id !== id);

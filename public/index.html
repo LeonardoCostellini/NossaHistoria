@@ -294,8 +294,22 @@ section{padding:80px 0; position:relative;}
   width:100%; height:100%; object-fit:cover; border-radius:50%;
   border:2px solid var(--paper); box-shadow:0 3px 7px rgba(74,50,38,0.25); display:block;
 }
-.timeline-foto{margin-top:12px; border-radius:8px; overflow:hidden; max-width:220px;}
+.timeline-fotos{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;}
+.timeline-foto{border-radius:8px; overflow:hidden; width:calc(50% - 4px); max-width:220px;}
+.timeline-fotos .timeline-foto:only-child{width:100%;}
 .timeline-foto img{width:100%; display:block;}
+.timeline-fotos .timeline-foto:not(:only-child) img{aspect-ratio:1/1; object-fit:cover;}
+.polaroid-qtd{
+  position:absolute; right:6px; bottom:6px; background:rgba(74,50,38,0.72); color:#fff;
+  font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:999px;
+}
+.polaroid-foto{position:relative;}
+#visualizador-miniaturas{display:none; gap:6px; margin:-6px 0 14px; overflow-x:auto; padding:2px;}
+.miniatura{
+  width:46px; height:46px; flex-shrink:0; object-fit:cover; border-radius:6px; cursor:pointer;
+  opacity:0.6; border:2px solid transparent; transition:opacity .2s, border-color .2s;
+}
+.miniatura.ativa{opacity:1; border-color:var(--rose-deep);}
 
 /* =========================================================================
    ÁLBUM DE FOTOS
@@ -675,6 +689,7 @@ footer .footer-coracao{color:var(--rose-deep);}
   <div class="visualizador-caixa">
     <button class="visualizador-fechar" id="fechar-visualizador">✕</button>
     <div class="visualizador-imagem" id="visualizador-imagem"></div>
+    <div id="visualizador-miniaturas"></div>
     <p class="visualizador-meta" id="visualizador-data"></p>
     <h3 class="visualizador-titulo" id="visualizador-titulo"></h3>
     <p class="visualizador-frase" id="visualizador-frase"></p>
@@ -972,6 +987,12 @@ function tocarSom(fn){
 // Gera um selinho pequeno com o Dudu ou a Bubu, alternando pelo índice —
 // usado no álbum, calendário, cartões e planos, para os dois estarem
 // presentes organicamente por toda a experiência (item 13 do pedido original).
+// Lista de fotos de uma memória (itens antigos só têm "img"; os novos têm "imgs")
+function listaFotos(item){
+  if(Array.isArray(item.imgs) && item.imgs.length) return item.imgs;
+  return item.img ? [item.img] : [];
+}
+
 function mascoteMini(indice, estiloPosicao){
   const usarDudu = indice % 2 === 0;
   const src = usarDudu ? CONFIG.personagemDuduImg : CONFIG.personagemBubuImg;
@@ -1137,7 +1158,7 @@ function renderTimeline(){
         <div class="timeline-data">${m.data}</div>
         <h3 class="timeline-titulo">${m.titulo}</h3>
         <p class="timeline-texto">${m.texto}</p>
-        ${ m.img ? `<div class="timeline-foto"><img src="${m.img}" alt="${m.titulo}"></div>` : '' }
+        ${ listaFotos(m).length ? `<div class="timeline-fotos">${listaFotos(m).map(u => `<div class="timeline-foto"><img src="${u}" alt="${m.titulo}" loading="lazy"></div>`).join('')}</div>` : '' }
         ${ i % 2 === 0 ? `<div class="timeline-personagem"><img src="${CONFIG.personagemDuduImg}" alt="Dudu"></div>` : `<div class="timeline-personagem"><img src="${CONFIG.personagemBubuImg}" alt="Bubu"></div>` }
       </div>
     </div>
@@ -1170,7 +1191,7 @@ function renderAlbum(){
     <div class="polaroid reveal visivel" data-indice="${i}">
       <div class="polaroid-adesivo">${adesivos[i % adesivos.length]}</div>
       ${mascoteMini(i, 'bottom:-8px; left:-8px;')}
-      <div class="polaroid-foto" data-emoji="${f.emoji || '📷'}">${f.img ? `<img src="${f.img}" onerror="this.parentElement.innerHTML=this.parentElement.dataset.emoji">` : (f.emoji || '📷')}</div>
+      <div class="polaroid-foto" data-emoji="${f.emoji || '📷'}">${listaFotos(f).length ? `<img src="${listaFotos(f)[0]}" loading="lazy" onerror="this.parentElement.innerHTML=this.parentElement.dataset.emoji">` : (f.emoji || '📷')}${listaFotos(f).length > 1 ? `<span class="polaroid-qtd">📷 ${listaFotos(f).length}</span>` : ''}</div>
       <div class="polaroid-legenda">${f.titulo}</div>
     </div>
   `).join('');
@@ -1194,17 +1215,33 @@ fetch('/api/dados?colecao=fotos', {cache:'no-store'})
   .catch(() => { /* segue com o fallback local, sem problema */ });
 
 let indiceFotoAtual = 0;
+function mostrarFotoNoVisualizador(f, n){
+  const fotos = listaFotos(f);
+  const caixaImagem = document.getElementById('visualizador-imagem');
+  caixaImagem.dataset.emoji = f.emoji || '📷';
+  caixaImagem.innerHTML = fotos.length
+    ? `<img src="${fotos[n]}" onerror="this.parentElement.textContent=this.parentElement.dataset.emoji">`
+    : (f.emoji || '📷');
+  // miniaturas só aparecem quando a memória tem mais de uma foto
+  const faixa = document.getElementById('visualizador-miniaturas');
+  if(fotos.length > 1){
+    faixa.innerHTML = fotos.map((u,i) => `<img class="miniatura${i === n ? ' ativa' : ''}" data-n="${i}" src="${u}" alt="Foto ${i+1}">`).join('');
+    faixa.style.display = 'flex';
+    faixa.querySelectorAll('.miniatura').forEach(el => {
+      el.addEventListener('click', () => { tocarSom(Sons.clique); mostrarFotoNoVisualizador(f, parseInt(el.dataset.n)); });
+    });
+  } else {
+    faixa.innerHTML = '';
+    faixa.style.display = 'none';
+  }
+}
 function abrirFoto(indice){
   indiceFotoAtual = (indice + FOTOS_ALBUM.length) % FOTOS_ALBUM.length;
   const f = FOTOS_ALBUM[indiceFotoAtual];
-  const caixaImagem = document.getElementById('visualizador-imagem');
-  caixaImagem.dataset.emoji = f.emoji;
-  caixaImagem.innerHTML = f.img
-    ? `<img src="${f.img}" onerror="this.parentElement.textContent=this.parentElement.dataset.emoji">`
-    : f.emoji;
+  mostrarFotoNoVisualizador(f, 0);
   document.getElementById('visualizador-data').textContent = `📅 ${f.data}${f.local ? ' · ' + f.local : ''}`;
   document.getElementById('visualizador-titulo').textContent = f.titulo;
-  document.getElementById('visualizador-frase').textContent = `"${f.frase}"`;
+  document.getElementById('visualizador-frase').textContent = f.frase ? `"${f.frase}"` : '';
   document.getElementById('visualizador-tags').innerHTML = (f.tags || []).map(t=>`<span class="tag">${t}</span>`).join('');
   document.getElementById('visualizador').classList.add('aberto');
 }
